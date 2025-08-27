@@ -18,8 +18,9 @@ export function SupportSection() {
           </div>
           <div className="rounded-xl border bg-white p-6">
             <h3 className="font-semibold mb-2">Contact</h3>
-            <p>3420 Bristol St., Suite 600, Costa Mesa, CA 92626</p>
-            <p className="mt-2">NEED SERVICE? <a className="text-primary font-semibold" href="tel:+18175238255">+1 (817) 523-8255</a></p>
+            <p>Florida, USA</p>
+            <p className="mt-2">NEED SERVICE? <a className="text-primary font-semibold" href="tel:+12067045757">+1 (206) 704-5757</a></p>
+            <p className="mt-1">Email: <a className="text-primary font-semibold" href="mailto:srssolutionltd@gmail.com">srssolutionltd@gmail.com</a></p>
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
               <div>
                 <div className="font-semibold">Generators</div>

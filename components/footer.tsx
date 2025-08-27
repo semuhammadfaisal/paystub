@@ -9,8 +9,13 @@ export function Footer() {
               <span className="text-secondary font-bold text-lg">FINANCIALS</span>
             </div>
             <p className="text-primary-foreground/80 text-sm">
-              Your trusted financial partner for professional paystubs and tax documents.
+              SRS Financials offers fast, accurate paystubs, tax returns, and proof of income documents. We provide personalized support and secure, reliable service. Your trusted partner for all financial documentation needs.
             </p>
+            <div className="mt-4 space-y-1 text-sm text-primary-foreground/80">
+              <p>📍 Florida, USA</p>
+              <p>📞 <a href="tel:+12067045757" className="hover:text-secondary">+1 (206) 704-5757</a></p>
+              <p>✉️ <a href="mailto:srssolutionltd@gmail.com" className="hover:text-secondary">srssolutionltd@gmail.com</a></p>
+            </div>
           </div>
 
           <div>
