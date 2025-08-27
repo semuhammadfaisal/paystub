@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Check } from "lucide-react"
 import { useRouter } from "next/navigation"
 
@@ -10,29 +10,29 @@ export function PricingSection() {
 
   const packages = [
     {
-      name: "Basic Document Package",
-      subtitle: "Get Verified Financial Documents In Hours",
+      name: "Basic",
+      subtitle: "For individuals who need quick essentials",
       price: 20,
-      features: ["1 Paystubs", "Basic Formatting", "24-Hour Delivery"],
-      buttonText: "Order Now",
+      features: ["1 Paystub", "Basic Formatting", "24-Hour Delivery"],
+      buttonText: "Get Started",
       popular: false,
       type: "basic",
     },
     {
-      name: "Standard Document Package",
-      subtitle: "Get Verified Financial Documents In Hours",
+      name: "Standard",
+      subtitle: "Our most popular package with added benefits",
       price: 30,
-      features: ["1 W2 Form", "Basic Formatting", "24-Hour Delivery"],
-      buttonText: "Order Now",
+      features: ["1 W2 Form", "Professional Formatting", "24-Hour Delivery"],
+      buttonText: "Choose Standard",
       popular: true,
       type: "standard",
     },
     {
-      name: "Premium Document Package",
-      subtitle: "Get Verified Financial Documents In Hours",
+      name: "Premium",
+      subtitle: "For professionals who need comprehensive docs",
       price: 50,
-      features: ["1040 Form", "Basic Formatting", "24-Hour Delivery"],
-      buttonText: "Order Now",
+      features: ["1 1040 Form", "Premium Formatting", "Priority Delivery"],
+      buttonText: "Go Premium",
       popular: false,
       type: "premium",
     },
@@ -43,64 +43,104 @@ export function PricingSection() {
   }
 
   return (
-    <section id="pricing" className="py-16 bg-gradient-to-b from-primary via-primary/90 to-primary relative overflow-hidden">
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-10 left-10 w-32 h-32 bg-secondary rounded-full blur-xl"></div>
-        <div className="absolute bottom-10 right-10 w-40 h-40 bg-secondary rounded-full blur-xl"></div>
-        <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-secondary rounded-full blur-lg"></div>
-      </div>
-
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <div className="bg-secondary py-4 mb-8 rounded-lg shadow-lg">
-            <h2 className="text-primary text-3xl font-bold">Choose Your Document Package</h2>
-          </div>
+    <section id="pricing" className="py-24 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="text-center mb-20">
+          <h2 className="text-4xl font-light text-gray-900 mb-4 tracking-tight">
+            Simple, Transparent Pricing
+          </h2>
+          <p className="text-lg text-gray-600 font-light max-w-2xl mx-auto leading-relaxed">
+            Choose the plan that best fits your needs. No hidden fees, no hassle.
+          </p>
         </div>
 
+        {/* Pricing Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {packages.map((pkg, index) => (
             <Card
               key={index}
-              className={`relative overflow-hidden transform hover:scale-105 transition-all duration-300 hover:shadow-2xl ${pkg.popular ? "ring-4 ring-secondary scale-105" : ""} group`}
+              className={`relative group transition-all duration-300 hover:shadow-lg border ${
+                pkg.popular
+                  ? "border-[#239BA0] shadow-md"
+                  : "border-gray-200 hover:border-[#239BA0]"
+              } bg-white rounded-none`}
             >
+              {/* Popular Badge */}
               {pkg.popular && (
-                <div className="absolute top-0 right-0 bg-secondary text-primary px-4 py-1 text-sm font-bold rounded-bl-lg z-10">
-                  POPULAR
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <div className="bg-[#239BA0] text-white px-4 py-2 text-sm font-medium tracking-wide">
+                    MOST POPULAR
+                  </div>
                 </div>
               )}
 
-              <CardHeader className="bg-primary text-center py-6 relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/80"></div>
-                <div className="relative">
-                  <h3 className="text-white font-bold text-lg">{pkg.name}</h3>
-                  <p className="text-white/90 text-sm">{pkg.subtitle}</p>
-                </div>
-              </CardHeader>
-
-              <CardContent className="p-8 text-center bg-gradient-to-b from-white to-gray-50">
-                <div className="mb-6">
-                  <span className="text-primary text-sm">$</span>
-                  <span className="text-primary text-5xl font-bold">{pkg.price}</span>
+              <CardContent className="p-8">
+                {/* Package Name & Description */}
+                <div className="mb-8">
+                  <h3 className="text-2xl font-light text-gray-900 mb-2 tracking-tight">
+                    {pkg.name}
+                  </h3>
+                  <p className="text-gray-600 text-sm font-light leading-relaxed">
+                    {pkg.subtitle}
+                  </p>
                 </div>
 
-                <ul className="space-y-4 mb-8">
-                  {pkg.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-center justify-center">
-                      <Check className="w-5 h-5 text-primary mr-3 flex-shrink-0" />
-                      <span className="text-foreground font-medium">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                {/* Price */}
+                <div className="mb-8">
+                  <div className="flex items-baseline">
+                    <span className="text-5xl font-light text-gray-900">${pkg.price}</span>
+                    <span className="text-gray-500 text-sm font-light ml-2">one-time</span>
+                  </div>
+                </div>
 
+                {/* Features */}
+                <div className="mb-8">
+                  <ul className="space-y-4">
+                    {pkg.features.map((feature, featureIndex) => (
+                      <li
+                        key={featureIndex}
+                        className="flex items-start text-gray-700"
+                      >
+                        <Check className="w-4 h-4 text-[#239BA0] mt-1 mr-3 flex-shrink-0" />
+                        <span className="font-light text-sm leading-relaxed">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* CTA Button */}
                 <Button
                   onClick={() => handleOrderClick(pkg.type)}
-                  className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold py-3 transform group-hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                  className={`w-full h-12 font-medium text-sm tracking-wide transition-all duration-200 rounded-none ${
+                    pkg.popular
+                      ? "bg-[#239BA0] text-white hover:bg-[#1e7d85]"
+                      : "bg-white text-[#239BA0] border border-[#239BA0] hover:bg-[#239BA0] hover:text-white"
+                  }`}
                 >
                   {pkg.buttonText}
                 </Button>
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        {/* Bottom Trust Indicators */}
+        <div className="mt-20 text-center">
+          <div className="flex items-center justify-center space-x-8 text-gray-500">
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-[#239BA0] rounded-full mr-2"></div>
+              <span className="text-sm font-light">24/7 Support</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-[#239BA0] rounded-full mr-2"></div>
+              <span className="text-sm font-light">Secure Payment</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-[#239BA0] rounded-full mr-2"></div>
+              <span className="text-sm font-light">Instant Delivery</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>

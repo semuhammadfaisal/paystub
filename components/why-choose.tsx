@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { ShieldCheck, Sparkles, Timer, BadgeCheck } from "lucide-react"
 
 export function WhyChoose() {
@@ -30,25 +30,43 @@ export function WhyChoose() {
   ]
 
   return (
-    <section id="about" className="py-16 bg-background">
+    <section id="about" className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-primary">Why choose SRS Financials?</h2>
-          <p className="mt-2 text-muted-foreground max-w-3xl mx-auto">
-            We’re literally the best. If you’re an independent contractor, entrepreneur or small business, you may not
-            have instant access to the payroll documents you need. That’s where we come in — legitimate, accurate and guaranteed.
+        {/* Header */}
+        <div className="text-center mb-20">
+          <h2 className="text-4xl font-light text-gray-900 mb-4 tracking-tight">
+            Why Choose SRS Financials?
+          </h2>
+          <p className="text-lg text-gray-600 font-light max-w-3xl mx-auto leading-relaxed">
+            We're committed to providing legitimate, accurate payroll documents you can trust.
+            Whether you're an independent contractor, entrepreneur, or small business owner.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {items.map((it) => (
-            <Card key={it.title} className="border border-border/60">
-              <CardHeader className="flex flex-row items-center gap-3">
-                <it.icon className="h-6 w-6 text-primary" />
-                <h3 className="text-lg font-semibold">{it.title}</h3>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{it.desc}</p>
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          {items.map((item, index) => (
+            <Card
+              key={index}
+              className="border border-gray-200 bg-white rounded-none hover:border-[#239BA0] transition-all duration-300"
+            >
+              <CardContent className="p-8">
+                {/* Icon and Title */}
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-12 h-12 flex items-center justify-center rounded-none bg-[#239BA0]/10">
+                    <item.icon className="w-6 h-6 text-[#239BA0]" />
+                  </div>
+                  <h3 className="text-xl font-light text-gray-900 tracking-tight">
+                    {item.title}
+                  </h3>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <p className="text-gray-600 font-light leading-relaxed text-sm">
+                    {item.desc}
+                  </p>
+                </div>
               </CardContent>
             </Card>
           ))}
