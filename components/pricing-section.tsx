@@ -43,7 +43,7 @@ export function PricingSection() {
   }
 
   return (
-    <section className="py-16 bg-gradient-to-b from-primary via-primary/90 to-primary relative overflow-hidden">
+    <section id="pricing" className="py-16 bg-gradient-to-b from-primary via-primary/90 to-primary relative overflow-hidden">
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-10 left-10 w-32 h-32 bg-secondary rounded-full blur-xl"></div>
         <div className="absolute bottom-10 right-10 w-40 h-40 bg-secondary rounded-full blur-xl"></div>

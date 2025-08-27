@@ -36,12 +36,18 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     const canvas = document.createElement("canvas")
     const ctx = canvas.getContext("2d")!
 
-    canvas.width = 1275
-    canvas.height = 1650
+    // Higher resolution for better quality
+    const scale = 2
+    canvas.width = 850 * scale
+    canvas.height = 1100 * scale
+    ctx.scale(scale, scale)
+
+    const canvasWidth = 850
+    const canvasHeight = 1100
 
     // White background
     ctx.fillStyle = "#ffffff"
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight)
 
     // Helper functions
     const formatCurrency = (amount: number) => {
@@ -56,8 +62,8 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
       if (!dateString) return ""
       return new Date(dateString).toLocaleDateString("en-US", {
         month: "2-digit",
-        day: "2-digit",
-        year: "numeric",
+        day: "2-digit", 
+        year: "numeric"
       })
     }
 
@@ -67,12 +73,14 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     }
 
     const drawLine = (x1: number, y1: number, x2: number, y2: number, color = "#000000", width = 1) => {
+      ctx.save()
       ctx.strokeStyle = color
       ctx.lineWidth = width
       ctx.beginPath()
       ctx.moveTo(x1, y1)
       ctx.lineTo(x2, y2)
       ctx.stroke()
+      ctx.restore()
     }
 
     const drawRect = (
@@ -84,6 +92,7 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
       strokeColor?: string,
       strokeWidth = 1,
     ) => {
+      ctx.save()
       if (fillColor) {
         ctx.fillStyle = fillColor
         ctx.fillRect(x, y, width, height)
@@ -93,385 +102,212 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
         ctx.lineWidth = strokeWidth
         ctx.strokeRect(x, y, width, height)
       }
+      ctx.restore()
+    }
+
+    const drawText = (text: string, x: number, y: number, font: string, color = "#000000", align: CanvasTextAlign = "left") => {
+      ctx.save()
+      ctx.font = font
+      ctx.fillStyle = color
+      ctx.textAlign = align
+      ctx.textBaseline = "middle"
+      ctx.fillText(text, x, y)
+      ctx.restore()
     }
 
     const margin = 40
-    const contentWidth = canvas.width - margin * 2
+    const contentWidth = canvasWidth - margin * 2
     let y = margin
 
-    // Main container border
-    drawRect(margin, margin, contentWidth, canvas.height - margin * 2, undefined, "#000000", 2)
+    // Main container border (subtle gray border)
+    drawRect(margin, margin, contentWidth, canvasHeight - margin * 2, "#ffffff", "#e5e7eb", 1)
+
+    y += 30
 
     // Header section
-    drawRect(margin, y, contentWidth, 80, "#f8f9fa", "#000000", 1)
+    // Company name and title
+    drawText("PAYROLL STATEMENT", margin + 30, y, "bold 20px 'Times New Roman'", "#1f2937")
+    drawText(data.employer_name || "Company Name", margin + 30, y + 28, "bold 16px 'Times New Roman'", "#1f2937")
+    
+    // Company address and EIN
+    drawText(data.employer_address || "Company Address", margin + 30, y + 50, "12px 'Times New Roman'", "#4b5563")
+    drawText(`EIN: ${data.employer_ein || "XX-XXXXXXX"}`, margin + 30, y + 70, "12px 'Times New Roman'", "#4b5563")
 
-    ctx.fillStyle = "#000000"
-    ctx.font = "bold 24px Arial"
-    ctx.textAlign = "center"
-    ctx.fillText(data.employer_name || "[COMPANY NAME]", canvas.width / 2, y + 30)
+    // PAY STUB box (teal background)
+    const payStubBoxWidth = 120
+    const payStubBoxHeight = 30
+    const payStubBoxX = canvasWidth - margin - payStubBoxWidth - 30
+    drawRect(payStubBoxX, y - 5, payStubBoxWidth, payStubBoxHeight, "#14b8a6")
+    drawText("PAY STUB", payStubBoxX + payStubBoxWidth / 2, y + 10, "bold 14px 'Times New Roman'", "#ffffff", "center")
 
-    ctx.font = "14px Arial"
-    ctx.fillText(data.employer_address || "[Company Address Line 1]", canvas.width / 2, y + 50)
-    ctx.fillText(`Phone: [Phone Number] | Email: [Email Address]`, canvas.width / 2, y + 68)
+    // Pay dates (right aligned)
+    drawText(`Pay Date: ${formatDate(data.pay_date)}`, canvasWidth - margin - 30, y + 45, "11px 'Times New Roman'", "#4b5563", "right")
+    drawText(`Pay Period: ${formatDate(data.pay_period_start)} - ${formatDate(data.pay_period_end)}`, canvasWidth - margin - 30, y + 65, "11px 'Times New Roman'", "#4b5563", "right")
 
-    y += 80
+    // Header separator line
+    y += 90
+    drawLine(margin + 30, y, canvasWidth - margin - 30, y, "#d1d5db", 2)
+    y += 30
 
-    // Pay period header
-    drawRect(margin, y, contentWidth, 40, "#e9ecef", "#000000", 1)
-    ctx.font = "bold 16px Arial"
-    ctx.fillText("EMPLOYEE PAY STATEMENT", canvas.width / 2, y + 25)
+    // Employee Information Section (two columns)
+    const leftColumnX = margin + 30
+    const rightColumnX = margin + 30 + (contentWidth / 2) + 20
+    
+    // Left column - Employee Information
+    drawText("EMPLOYEE INFORMATION", leftColumnX, y, "bold 13px 'Times New Roman'", "#14b8a6")
+    drawLine(leftColumnX, y + 8, leftColumnX + 180, y + 8, "#cbd5e1", 1)
+    
+    let leftY = y + 30
+    drawText(data.employee_name || "Employee Name", leftColumnX, leftY, "12px 'Times New Roman'", "#1f2937")
+    leftY += 20
+    drawText(data.employee_address || "Employee Address", leftColumnX, leftY, "12px 'Times New Roman'", "#1f2937")
+    leftY += 20
+    drawText(`SSN: ${maskSSN(data.employee_ssn)}`, leftColumnX, leftY, "12px 'Times New Roman'", "#1f2937")
+    
+    // Right column - Pay Information
+    drawText("PAY INFORMATION", rightColumnX, y, "bold 13px 'Times New Roman'", "#14b8a6")
+    drawLine(rightColumnX, y + 8, rightColumnX + 180, y + 8, "#cbd5e1", 1)
+    
+    let rightY = y + 30
+    drawText(`Pay Frequency: ${data.pay_frequency || "Bi-Weekly"}`, rightColumnX, rightY, "12px 'Times New Roman'", "#1f2937")
+    rightY += 20
+    
+    if (data.hourly_rate) {
+      drawText(`Pay Type: Hourly`, rightColumnX, rightY, "12px 'Times New Roman'", "#1f2937")
+      rightY += 20
+      drawText(`Hourly Rate: ${formatCurrency(data.hourly_rate)}`, rightColumnX, rightY, "12px 'Times New Roman'", "#1f2937")
+      rightY += 20
+      drawText(`Hours Worked: ${data.hours_worked || 0}`, rightColumnX, rightY, "12px 'Times New Roman'", "#1f2937")
+      if (data.overtime_hours && data.overtime_hours > 0) {
+        rightY += 20
+        drawText(`Overtime Hours: ${data.overtime_hours} @ ${formatCurrency(data.overtime_rate || data.hourly_rate * 1.5)}`, rightColumnX, rightY, "11px 'Times New Roman'", "#1f2937")
+      }
+    } else {
+      drawText(`Pay Type: Salary`, rightColumnX, rightY, "12px 'Times New Roman'", "#1f2937")
+      if (data.salary) {
+        rightY += 20
+        drawText(`Annual Salary: ${formatCurrency(data.salary)}`, rightColumnX, rightY, "12px 'Times New Roman'", "#1f2937")
+      }
+    }
+    
+    y += 140
 
+    // Section separator
+    drawLine(margin + 30, y, canvasWidth - margin - 30, y, "#d1d5db", 1)
     y += 40
 
-    // Main content area - two columns
-    const leftWidth = contentWidth / 2
-    const rightWidth = contentWidth / 2
-    const contentHeight = 600
-
-    // Left section border
-    drawRect(margin, y, leftWidth, contentHeight, undefined, "#000000", 1)
-    // Right section border
-    drawRect(margin + leftWidth, y, rightWidth, contentHeight, undefined, "#000000", 1)
-
-    // Left section - Employee Information
-    let leftY = y + 20
-    ctx.textAlign = "left"
-    ctx.font = "bold 16px Arial"
-    ctx.fillText("EMPLOYEE INFORMATION", margin + 15, leftY)
-
-    leftY += 30
-
-    // Employee info grid
-    const infoItems = [
-      { label: "Employee Name", value: data.employee_name || "[Employee Full Name]" },
-      { label: "Employee ID", value: "[Employee ID]" },
-      { label: "Department", value: "[Department Name]" },
-      { label: "Position", value: "[Job Title]" },
-      { label: "Pay Period", value: `${formatDate(data.pay_period_start)} - ${formatDate(data.pay_period_end)}` },
-      { label: "Pay Date", value: formatDate(data.pay_date) },
-    ]
-
-    infoItems.forEach((item, index) => {
-      const row = Math.floor(index / 2)
-      const col = index % 2
-      const itemX = margin + 15 + col * (leftWidth / 2 - 20)
-      const itemY = leftY + row * 50
-
-      ctx.font = "bold 12px Arial"
-      ctx.fillStyle = "#666666"
-      ctx.fillText(item.label.toUpperCase(), itemX, itemY)
-
-      ctx.font = "bold 14px Arial"
-      ctx.fillStyle = "#000000"
-      ctx.fillText(item.value, itemX, itemY + 18)
-
-      // Underline
-      drawLine(itemX, itemY + 22, itemX + (leftWidth / 2 - 30), itemY + 22, "#dddddd", 1)
-    })
-
-    leftY += 180
-
-    // Earnings table
-    ctx.font = "bold 16px Arial"
-    ctx.fillStyle = "#000000"
-    ctx.fillText("EARNINGS", margin + 15, leftY)
-
-    leftY += 25
-
-    // Earnings table header
-    const tableWidth = leftWidth - 30
-    const colWidths = [tableWidth * 0.35, tableWidth * 0.15, tableWidth * 0.15, tableWidth * 0.175, tableWidth * 0.175]
-
-    drawRect(margin + 15, leftY, tableWidth, 30, "#f8f9fa", "#000000", 1)
-
-    ctx.font = "bold 12px Arial"
-    ctx.fillStyle = "#000000"
-    const headers = ["Description", "Hours", "Rate", "Current", "YTD"]
-    let headerX = margin + 15
-
-    headers.forEach((header, index) => {
-      ctx.fillText(header.toUpperCase(), headerX + 5, leftY + 20)
-      if (index < headers.length - 1) {
-        drawLine(headerX + colWidths[index], leftY, headerX + colWidths[index], leftY + 30, "#000000", 1)
+    // Earnings and Deductions Section (two columns with proper spacing)
+    const earningsX = leftColumnX
+    const deductionsX = rightColumnX
+    const columnWidth = 250
+    
+    // Earnings column
+    drawText("EARNINGS", earningsX, y, "bold 13px 'Times New Roman'", "#14b8a6")
+    drawLine(earningsX, y + 8, earningsX + columnWidth - 50, y + 8, "#cbd5e1", 1)
+    
+    let earningsY = y + 30
+    
+    if (data.hourly_rate) {
+      // Hourly earnings breakdown
+      const regularPay = (data.hours_worked || 0) * (data.hourly_rate || 0)
+      drawText(`Regular Pay (${data.hours_worked || 0} hrs)`, earningsX, earningsY, "12px 'Times New Roman'", "#1f2937")
+      drawText(formatCurrency(regularPay), earningsX + columnWidth - 50, earningsY, "12px 'Times New Roman'", "#1f2937", "right")
+      earningsY += 22
+      
+      if (data.overtime_hours && data.overtime_hours > 0) {
+        const overtimePay = data.overtime_hours * (data.overtime_rate || data.hourly_rate * 1.5)
+        drawText(`Overtime Pay (${data.overtime_hours} hrs)`, earningsX, earningsY, "12px 'Times New Roman'", "#1f2937")
+        drawText(formatCurrency(overtimePay), earningsX + columnWidth - 50, earningsY, "12px 'Times New Roman'", "#1f2937", "right")
+        earningsY += 22
       }
-      headerX += colWidths[index]
-    })
-
-    leftY += 30
-
-    // Earnings rows
-    const earningsData = [
-      {
-        desc: "Regular Hours",
-        hours: data.hours_worked || 80,
-        rate: data.hourly_rate || 25,
-        current: (data.hours_worked || 80) * (data.hourly_rate || 25),
-        ytd: (data.hours_worked || 80) * (data.hourly_rate || 25) * 12,
-      },
-      {
-        desc: "Overtime Hours",
-        hours: data.overtime_hours || 5,
-        rate: data.overtime_rate || 37.5,
-        current: (data.overtime_hours || 5) * (data.overtime_rate || 37.5),
-        ytd: (data.overtime_hours || 5) * (data.overtime_rate || 37.5) * 12,
-      },
-      {
-        desc: "Holiday Pay",
-        hours: 8,
-        rate: data.hourly_rate || 25,
-        current: 8 * (data.hourly_rate || 25),
-        ytd: 8 * (data.hourly_rate || 25) * 4,
-      },
+    } else {
+      // Salary earnings
+      drawText("Salary", earningsX, earningsY, "12px 'Times New Roman'", "#1f2937")
+      drawText(formatCurrency(data.salary || 0), earningsX + columnWidth - 50, earningsY, "12px 'Times New Roman'", "#1f2937", "right")
+      earningsY += 22
+    }
+    
+    // Additional earnings
+    if (data.bonus && data.bonus > 0) {
+      drawText("Bonus", earningsX, earningsY, "12px 'Times New Roman'", "#1f2937")
+      drawText(formatCurrency(data.bonus), earningsX + columnWidth - 50, earningsY, "12px 'Times New Roman'", "#1f2937", "right")
+      earningsY += 22
+    }
+    
+    if (data.commission && data.commission > 0) {
+      drawText("Commission", earningsX, earningsY, "12px 'Times New Roman'", "#1f2937")
+      drawText(formatCurrency(data.commission), earningsX + columnWidth - 50, earningsY, "12px 'Times New Roman'", "#1f2937", "right")
+      earningsY += 22
+    }
+    
+    // Gross pay total with separator
+    earningsY += 10
+    drawLine(earningsX, earningsY, earningsX + columnWidth - 50, earningsY, "#9ca3af", 1)
+    earningsY += 20
+    drawText("GROSS PAY", earningsX, earningsY, "bold 13px 'Times New Roman'", "#1f2937")
+    drawText(formatCurrency(data.gross_pay), earningsX + columnWidth - 50, earningsY, "bold 13px 'Times New Roman'", "#1f2937", "right")
+    
+    // Deductions column
+    drawText("DEDUCTIONS", deductionsX, y, "bold 13px 'Times New Roman'", "#14b8a6")
+    drawLine(deductionsX, y + 8, deductionsX + columnWidth - 50, y + 8, "#cbd5e1", 1)
+    
+    let deductionsY = y + 30
+    
+    const deductions = [
+      { label: "Federal Tax", amount: data.federal_tax },
+      { label: "State Tax", amount: data.state_tax },
+      { label: "Social Security", amount: data.social_security },
+      { label: "Medicare", amount: data.medicare },
+      { label: "Health Insurance", amount: data.health_insurance },
+      { label: "Dental Insurance", amount: data.dental_insurance },
+      { label: "401(k)", amount: data.retirement_401k },
+      { label: "Other Deductions", amount: data.other_deductions },
     ]
-
-    ctx.font = "12px Arial"
-    earningsData.forEach((row, index) => {
-      const rowY = leftY + index * 25
-      drawRect(margin + 15, rowY, tableWidth, 25, undefined, "#cccccc", 1)
-
-      let cellX = margin + 15
-      ctx.textAlign = "left"
-      ctx.fillText(row.desc, cellX + 5, rowY + 16)
-      cellX += colWidths[0]
-
-      ctx.textAlign = "right"
-      ctx.fillText(row.hours.toFixed(2), cellX - 5, rowY + 16)
-      cellX += colWidths[1]
-
-      ctx.fillText(formatCurrency(row.rate), cellX - 5, rowY + 16)
-      cellX += colWidths[2]
-
-      ctx.fillText(formatCurrency(row.current), cellX - 5, rowY + 16)
-      cellX += colWidths[3]
-
-      ctx.fillText(formatCurrency(row.ytd), cellX - 5, rowY + 16)
-    })
-
-    leftY += 75
-
-    // Total gross pay row
-    drawRect(margin + 15, leftY, tableWidth, 30, "#f8f9fa", "#000000", 1)
-    ctx.font = "bold 12px Arial"
-    ctx.textAlign = "left"
-    ctx.fillText("TOTAL GROSS PAY", margin + 20, leftY + 20)
-
-    ctx.textAlign = "right"
-    const totalHours = earningsData.reduce((sum, row) => sum + row.hours, 0)
-    const totalCurrent = earningsData.reduce((sum, row) => sum + row.current, 0)
-    const totalYTD = earningsData.reduce((sum, row) => sum + row.ytd, 0)
-
-    let totalX = margin + 15 + colWidths[0]
-    ctx.fillText(totalHours.toFixed(2), totalX - 5, leftY + 20)
-    totalX += colWidths[1] + colWidths[2]
-    ctx.fillText(formatCurrency(totalCurrent), totalX - 5, leftY + 20)
-    totalX += colWidths[3]
-    ctx.fillText(formatCurrency(totalYTD), totalX - 5, leftY + 20)
-
-    // Right section - Deductions
-    let rightY = y + 20
-    ctx.textAlign = "left"
-    ctx.font = "bold 16px Arial"
-    ctx.fillText("TAX DEDUCTIONS", margin + leftWidth + 15, rightY)
-
-    rightY += 25
-
-    // Tax deductions table
-    const rightTableWidth = rightWidth - 30
-    const rightColWidths = [rightTableWidth * 0.6, rightTableWidth * 0.2, rightTableWidth * 0.2]
-
-    drawRect(margin + leftWidth + 15, rightY, rightTableWidth, 30, "#f8f9fa", "#000000", 1)
-
-    ctx.font = "bold 12px Arial"
-    const rightHeaders = ["Description", "Current", "YTD"]
-    let rightHeaderX = margin + leftWidth + 15
-
-    rightHeaders.forEach((header, index) => {
-      ctx.fillText(header.toUpperCase(), rightHeaderX + 5, rightY + 20)
-      if (index < rightHeaders.length - 1) {
-        drawLine(
-          rightHeaderX + rightColWidths[index],
-          rightY,
-          rightHeaderX + rightColWidths[index],
-          rightY + 30,
-          "#000000",
-          1,
-        )
+    
+    deductions.forEach(deduction => {
+      if (deduction.amount > 0) {
+        drawText(deduction.label, deductionsX, deductionsY, "12px 'Times New Roman'", "#1f2937")
+        drawText(formatCurrency(deduction.amount), deductionsX + columnWidth - 50, deductionsY, "12px 'Times New Roman'", "#1f2937", "right")
+        deductionsY += 22
       }
-      rightHeaderX += rightColWidths[index]
     })
+    
+    // Total deductions with separator
+    deductionsY += 10
+    drawLine(deductionsX, deductionsY, deductionsX + columnWidth - 50, deductionsY, "#9ca3af", 1)
+    deductionsY += 20
+    drawText("TOTAL DEDUCTIONS", deductionsX, deductionsY, "bold 13px 'Times New Roman'", "#1f2937")
+    drawText(formatCurrency(data.total_deductions), deductionsX + columnWidth - 50, deductionsY, "bold 13px 'Times New Roman'", "#1f2937", "right")
+    
+    // Find the higher Y position for net pay section
+    const maxY = Math.max(earningsY, deductionsY)
+    y = maxY + 60
 
-    rightY += 30
+    // Section separator before net pay
+    drawLine(margin + 30, y, canvasWidth - margin - 30, y, "#d1d5db", 2)
+    y += 30
+    
+    // Net Pay section with teal background (full width)
+    const netPayHeight = 60
+    drawRect(margin + 30, y, contentWidth - 60, netPayHeight, "#14b8a6")
+    
+    // Net pay text (white on teal)
+    drawText("NET PAY", margin + 50, y + netPayHeight / 2, "bold 20px 'Times New Roman'", "#ffffff")
+    drawText(formatCurrency(data.net_pay), canvasWidth - margin - 50, y + netPayHeight / 2, "bold 22px 'Times New Roman'", "#ffffff", "right")
+    
+    y += netPayHeight + 50
 
-    // Tax deductions data
-    const taxDeductions = [
-      { desc: "Federal Income Tax", current: data.federal_tax || 358.12, ytd: (data.federal_tax || 358.12) * 12 },
-      { desc: "State Income Tax", current: data.state_tax || 119.38, ytd: (data.state_tax || 119.38) * 12 },
-      { desc: "Social Security", current: data.social_security || 148.03, ytd: (data.social_security || 148.03) * 12 },
-      { desc: "Medicare", current: data.medicare || 34.62, ytd: (data.medicare || 34.62) * 12 },
-      { desc: "State Disability", current: 23.88, ytd: 23.88 * 12 },
-    ]
+    // Footer section
+    drawLine(margin + 30, y, canvasWidth - margin - 30, y, "#e5e7eb", 1)
+    y += 30
+    
+    drawText("This is a computer-generated payroll statement and does not require a signature.", canvasWidth / 2, y, "10px 'Times New Roman'", "#6b7280", "center")
+    drawText("Please retain this statement for your records.", canvasWidth / 2, y + 20, "10px 'Times New Roman'", "#6b7280", "center")
 
-    ctx.font = "12px Arial"
-    taxDeductions.forEach((row, index) => {
-      const rowY = rightY + index * 25
-      drawRect(margin + leftWidth + 15, rowY, rightTableWidth, 25, undefined, "#cccccc", 1)
-
-      ctx.textAlign = "left"
-      ctx.fillText(row.desc, margin + leftWidth + 20, rowY + 16)
-
-      ctx.textAlign = "right"
-      let cellX = margin + leftWidth + 15 + rightColWidths[0]
-      ctx.fillText(formatCurrency(row.current), cellX - 5, rowY + 16)
-      cellX += rightColWidths[1]
-      ctx.fillText(formatCurrency(row.ytd), cellX - 5, rowY + 16)
-    })
-
-    rightY += 150
-
-    // Other deductions
-    ctx.textAlign = "left"
-    ctx.font = "bold 16px Arial"
-    ctx.fillText("OTHER DEDUCTIONS", margin + leftWidth + 15, rightY)
-
-    rightY += 25
-
-    // Other deductions table header
-    drawRect(margin + leftWidth + 15, rightY, rightTableWidth, 30, "#f8f9fa", "#000000", 1)
-
-    ctx.font = "bold 12px Arial"
-    rightHeaderX = margin + leftWidth + 15
-
-    rightHeaders.forEach((header, index) => {
-      ctx.fillText(header.toUpperCase(), rightHeaderX + 5, rightY + 20)
-      if (index < rightHeaders.length - 1) {
-        drawLine(
-          rightHeaderX + rightColWidths[index],
-          rightY,
-          rightHeaderX + rightColWidths[index],
-          rightY + 30,
-          "#000000",
-          1,
-        )
-      }
-      rightHeaderX += rightColWidths[index]
-    })
-
-    rightY += 30
-
-    // Other deductions data
-    const otherDeductions = [
-      { desc: "Health Insurance", current: data.health_insurance || 125, ytd: (data.health_insurance || 125) * 12 },
-      { desc: "Dental Insurance", current: data.dental_insurance || 25, ytd: (data.dental_insurance || 25) * 12 },
-      {
-        desc: "401(k) Contribution",
-        current: data.retirement_401k || 143.25,
-        ytd: (data.retirement_401k || 143.25) * 12,
-      },
-      { desc: "Life Insurance", current: 15, ytd: 15 * 12 },
-    ]
-
-    ctx.font = "12px Arial"
-    otherDeductions.forEach((row, index) => {
-      const rowY = rightY + index * 25
-      drawRect(margin + leftWidth + 15, rowY, rightTableWidth, 25, undefined, "#cccccc", 1)
-
-      ctx.textAlign = "left"
-      ctx.fillText(row.desc, margin + leftWidth + 20, rowY + 16)
-
-      ctx.textAlign = "right"
-      let cellX = margin + leftWidth + 15 + rightColWidths[0]
-      ctx.fillText(formatCurrency(row.current), cellX - 5, rowY + 16)
-      cellX += rightColWidths[1]
-      ctx.fillText(formatCurrency(row.ytd), cellX - 5, rowY + 16)
-    })
-
-    rightY += 125
-
-    // Total deductions row
-    drawRect(margin + leftWidth + 15, rightY, rightTableWidth, 30, "#f8f9fa", "#000000", 1)
-    ctx.font = "bold 12px Arial"
-    ctx.textAlign = "left"
-    ctx.fillText("TOTAL DEDUCTIONS", margin + leftWidth + 20, rightY + 20)
-
-    ctx.textAlign = "right"
-    const totalDeductionsCurrent = [...taxDeductions, ...otherDeductions].reduce((sum, row) => sum + row.current, 0)
-    const totalDeductionsYTD = [...taxDeductions, ...otherDeductions].reduce((sum, row) => sum + row.ytd, 0)
-
-    let deductionX = margin + leftWidth + 15 + rightColWidths[0]
-    ctx.fillText(formatCurrency(totalDeductionsCurrent), deductionX - 5, rightY + 20)
-    deductionX += rightColWidths[1]
-    ctx.fillText(formatCurrency(totalDeductionsYTD), deductionX - 5, rightY + 20)
-
-    y += contentHeight + 20
-
-    // Net Pay section
-    drawRect(margin, y, contentWidth, 60, "#f8f9fa", "#000000", 2)
-
-    ctx.font = "bold 16px Arial"
-    ctx.textAlign = "center"
-    ctx.fillText("Net Pay", canvas.width / 2, y + 20)
-
-    ctx.font = "bold 32px Arial"
-    const netPay = totalCurrent - totalDeductionsCurrent
-    ctx.fillText(formatCurrency(netPay), canvas.width / 2, y + 50)
-
-    y += 80
-
-    // YTD Summary section
-    drawRect(margin, y, contentWidth, 80, "#ffffff", "#000000", 1)
-
-    const ytdSectionWidth = contentWidth / 3
-
-    // YTD Gross Pay
-    ctx.font = "bold 12px Arial"
-    ctx.textAlign = "center"
-    ctx.fillText("YTD GROSS PAY", margin + ytdSectionWidth / 2, y + 20)
-    drawRect(margin + 20, y + 30, ytdSectionWidth - 40, 35, "#ffffff", "#dddddd", 1)
-    ctx.font = "bold 18px Arial"
-    ctx.fillText(formatCurrency(totalYTD), margin + ytdSectionWidth / 2, y + 52)
-
-    // YTD Deductions
-    ctx.font = "bold 12px Arial"
-    ctx.fillText("YTD DEDUCTIONS", margin + ytdSectionWidth + ytdSectionWidth / 2, y + 20)
-    drawRect(margin + ytdSectionWidth + 20, y + 30, ytdSectionWidth - 40, 35, "#ffffff", "#dddddd", 1)
-    ctx.font = "bold 18px Arial"
-    ctx.fillText(formatCurrency(totalDeductionsYTD), margin + ytdSectionWidth + ytdSectionWidth / 2, y + 52)
-
-    // YTD Net Pay
-    ctx.font = "bold 12px Arial"
-    ctx.fillText("YTD NET PAY", margin + ytdSectionWidth * 2 + ytdSectionWidth / 2, y + 20)
-    drawRect(margin + ytdSectionWidth * 2 + 20, y + 30, ytdSectionWidth - 40, 35, "#ffffff", "#dddddd", 1)
-    ctx.font = "bold 18px Arial"
-    ctx.fillText(
-      formatCurrency(totalYTD - totalDeductionsYTD),
-      margin + ytdSectionWidth * 2 + ytdSectionWidth / 2,
-      y + 52,
-    )
-
-    y += 100
-
-    // Footer
-    drawRect(margin, y, contentWidth, 60, undefined, "#000000", 1)
-
-    ctx.font = "11px Arial"
-    ctx.textAlign = "center"
-    ctx.fillStyle = "#666666"
-    ctx.fillText(
-      "This statement is for informational purposes only and serves as a record of your earnings and deductions.",
-      canvas.width / 2,
-      y + 20,
-    )
-    ctx.font = "italic 11px Arial"
-    ctx.fillText(
-      "Please retain this pay statement for your records. Contact HR department for any questions or discrepancies.",
-      canvas.width / 2,
-      y + 40,
-    )
-
-    // Convert canvas to blob
+    // Convert canvas to blob with higher quality
     canvas.toBlob((blob) => {
       resolve(blob!)
-    }, "image/png")
+    }, "image/png", 1.0)
   })
 }
 

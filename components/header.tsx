@@ -40,35 +40,30 @@ export function Header() {
           <nav className="hidden lg:block">
             <div className="flex items-center space-x-1">
               <Link
-                href="/"
-                className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
-              >
-                Home
-              </Link>
-              <Link
                 href="/create-paystub"
                 className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
               >
-                Paystubs
+                Paystub
               </Link>
               <Link
-                href="/create-tax-return"
+                href="#documents"
                 className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
               >
-                Tax Return
+                Documents
               </Link>
               <Link
-                href="/create-w2"
+                href="#pricing"
                 className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
               >
-                W2 Form
+                Pricing
               </Link>
               <Link
-                href="/create-1099"
+                href="#about"
                 className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
               >
-                1099-MISC
+                About Us
               </Link>
+              <span className="px-3 py-2 text-sm font-medium rounded-md text-foreground/70">US</span>
             </div>
           </nav>
 
@@ -88,6 +83,11 @@ export function Header() {
               </>
             ) : (
               <>
+                <Link href="#support" className="hidden sm:block">
+                  <Button variant="outline" size="sm" className="font-medium bg-transparent">
+                    Get support
+                  </Button>
+                </Link>
                 <Link href="/login" className="hidden sm:block">
                   <Button variant="ghost" size="sm" className="font-medium">
                     Sign In
@@ -114,34 +114,34 @@ export function Header() {
           <div className="lg:hidden border-t border-border/50 py-4">
             <div className="flex flex-col space-y-2">
               <Link
-                href="/"
-                className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
-              >
-                Home
-              </Link>
-              <Link
                 href="/create-paystub"
                 className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
               >
-                Paystubs
+                Paystub
               </Link>
               <Link
-                href="/create-tax-return"
+                href="#documents"
                 className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
               >
-                Tax Return
+                Documents
               </Link>
               <Link
-                href="/create-w2"
+                href="#pricing"
                 className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
               >
-                W2 Form
+                Pricing
               </Link>
               <Link
-                href="/create-1099"
+                href="#about"
                 className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
               >
-                1099-MISC
+                About Us
+              </Link>
+              <Link
+                href="#support"
+                className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
+              >
+                Get support
               </Link>
               {!user && (
                 <Link

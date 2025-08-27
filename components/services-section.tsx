@@ -44,8 +44,8 @@ export function ServicesSection() {
     <section className="py-16 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <div className="bg-secondary py-4">
-            <h2 className="text-primary text-3xl font-bold">What Service We Offer</h2>
+          <div className="bg-secondary py-4 rounded-lg">
+            <h2 className="text-white text-3xl font-bold">What Service We Offer</h2>
           </div>
         </div>
 
@@ -53,7 +53,7 @@ export function ServicesSection() {
           {services.map((service, index) => (
             <Card key={index} className="overflow-hidden">
               <div className={`${service.bgColor} py-4 px-6`}>
-                <h3 className="text-primary text-xl font-bold text-center">{service.title}</h3>
+                <h3 className="text-white text-xl font-bold text-center">{service.title}</h3>
               </div>
               <CardContent className="p-6">
                 <p className="text-foreground leading-relaxed">{service.description}</p>

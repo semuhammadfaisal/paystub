@@ -31,12 +31,16 @@ export function DocumentTypes() {
   ]
 
   return (
-    <section className="py-16 bg-gradient-to-r from-secondary via-secondary/80 to-secondary">
+    <section id="documents" className="py-16 bg-gradient-to-r from-secondary via-secondary/80 to-secondary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-8">
+          <h2 className="text-white text-3xl font-bold">Documents</h2>
+          <p className="text-white/90 mt-2">Paystub, W‑2, 1099‑MISC and Tax Return — choose and generate in minutes.</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {documents.map((doc, index) => (
             <div key={index} className="text-center group">
-              <h3 className="text-primary text-lg font-bold mb-6">{doc.title}</h3>
+              <h3 className="text-white text-lg font-bold mb-6">{doc.title}</h3>
 
               <Card className="bg-white p-6 rounded-2xl shadow-lg mb-6 transform group-hover:scale-105 transition-all duration-300 group-hover:shadow-xl">
                 <div className="aspect-[3/4] flex items-center justify-center">
