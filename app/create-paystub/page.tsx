@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { PaystubGenerator } from "@/components/paystub-generator"
 import { PageHeader } from "@/components/page-header"
+import { Button } from "@/components/ui/button"
+import { MessageCircle } from "lucide-react"
 
 export default async function CreatePaystubPage() {
   const supabase = createClient()
@@ -22,6 +24,24 @@ export default async function CreatePaystubPage() {
           <p className="text-muted-foreground">Generate professional paystubs in minutes with our easy-to-use form</p>
         </div>
         <PaystubGenerator user={user} />
+
+        {/* WhatsApp CTA section */}
+        <section className="mt-12">
+          <div className="rounded-2xl border bg-muted/30 p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold tracking-tight">Want a fully professional paystub prepared for you?</h2>
+                <p className="text-muted-foreground mt-1">Chat with us on WhatsApp and our team will handle it end‑to‑end.</p>
+              </div>
+              <a href="https://wa.me/12067045757" target="_blank" rel="noopener noreferrer">
+                <Button size="lg" className="bg-[#25D366] hover:bg-[#20bd5a] text-white">
+                  <MessageCircle className="h-5 w-5" />
+                  Contact on WhatsApp
+                </Button>
+              </a>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   )
