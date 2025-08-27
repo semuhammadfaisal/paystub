@@ -41,7 +41,7 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
             </div>
           </div>
           <div className="text-right">
-            <div className="bg-secondary text-secondary-foreground px-3 py-1 rounded font-bold">PAY STUB</div>
+            <div className="bg-secondary text-secondary-foreground px-3 py-1 rounded font-bold">Paystub</div>
             <div className="mt-2 text-xs">
               <div>Pay Date: {formatDate(data.payDate)}</div>
               <div>

@@ -6,7 +6,7 @@ export function WhyChoose() {
     {
       title: "Trust a Seamless Process",
       desc:
-        "You need paystubs fast. In a few steps, you’ll have legitimate pay stubs that show employment details, gross and net salary, payroll tax deductions and more.",
+        "You need paystubs fast. In a few steps, you’ll have legitimate Paystubs that show employment details, gross and net salary, payroll tax deductions and more.",
       icon: Timer,
     },
     {

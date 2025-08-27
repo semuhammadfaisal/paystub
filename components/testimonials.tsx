@@ -13,7 +13,7 @@ export function Testimonials() {
     {
       name: "Sarah Miles",
       text:
-        "SRS helped me generate a pay stub for my Yoga business for the PPP. Their system is by far the easiest I’ve used. Thank you so much!!",
+        "SRS helped me generate a Paystub for my Yoga business for the PPP. Their system is by far the easiest I’ve used. Thank you so much!!",
     },
     {
       name: "Cindi Yung",

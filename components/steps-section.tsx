@@ -16,8 +16,8 @@ export function StepsSection() {
       icon: Eye,
     },
     {
-      title: "Download your pay stubs",
-      desc: "Download and print the secure PDF. We’ll print and mail your pay stubs and W‑2s.",
+      title: "Download your Paystubs",
+      desc: "Download and print the secure PDF. We’ll print and mail your Paystubs and W‑2s.",
       icon: DownloadCloud,
     },
   ]

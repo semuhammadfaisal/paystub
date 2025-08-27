@@ -133,12 +133,12 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     drawText(data.employer_address || "Company Address", margin + 30, y + 50, "12px 'Times New Roman'", "#4b5563")
     drawText(`EIN: ${data.employer_ein || "XX-XXXXXXX"}`, margin + 30, y + 70, "12px 'Times New Roman'", "#4b5563")
 
-    // PAY STUB box (teal background)
+    // Paystub box (teal background)
     const payStubBoxWidth = 120
     const payStubBoxHeight = 30
     const payStubBoxX = canvasWidth - margin - payStubBoxWidth - 30
     drawRect(payStubBoxX, y - 5, payStubBoxWidth, payStubBoxHeight, "#14b8a6")
-    drawText("PAY STUB", payStubBoxX + payStubBoxWidth / 2, y + 10, "bold 14px 'Times New Roman'", "#ffffff", "center")
+    drawText("Paystub", payStubBoxX + payStubBoxWidth / 2, y + 10, "bold 14px 'Times New Roman'", "#ffffff", "center")
 
     // Pay dates (right aligned)
     drawText(`Pay Date: ${formatDate(data.pay_date)}`, canvasWidth - margin - 30, y + 45, "11px 'Times New Roman'", "#4b5563", "right")

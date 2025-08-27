@@ -18,8 +18,8 @@ export function AnatomySection() {
         <div className="text-center mb-10">
           <h2 className="text-3xl font-bold">The Anatomy of a Paystub</h2>
           <p className="text-muted-foreground max-w-3xl mx-auto">
-            42% of U.S. employees say taxes and deductions on their pay stubs are confusing. We’re breaking down the key
-            elements below so you can better understand your pay stub.
+            42% of U.S. employees say taxes and deductions on their Paystubs are confusing. We’re breaking down the key
+            elements below so you can better understand your Paystub.
           </p>
         </div>
 

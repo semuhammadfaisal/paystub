@@ -5,7 +5,7 @@ export function ServicesSection() {
     {
       title: "Paystubs Made Easy",
       description:
-        "Get custom pay stubs that look just like real employee pay statements. We manually calculate everything to ensure accuracy – no online generators here. Whether you need a printable paystub or a proof of income document for rent, loans, or job verification – we've got you covered.",
+        "Get custom Paystubs that look just like real employee pay statements. We manually calculate everything to ensure accuracy – no online generators here. Whether you need a printable paystub or a proof of income document for rent, loans, or job verification – we've got you covered.",
       bgColor: "bg-secondary",
     },
     {
