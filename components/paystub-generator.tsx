@@ -46,10 +46,15 @@ export interface PaystubData {
 
   // Earnings Details
   payType: "hourly" | "salary"
+  // Hourly fields (used when payType === "hourly")
+  hourlyRate: number
+  hoursWorked: number
   regularRate: number
   regularHours: number
   overtimeRate: number
   overtimeHours: number
+  // Salary field (used when payType === "salary")
+  salary: number
   bonusAmount: number
   commissionAmount: number
   holidayHours: number
@@ -119,10 +124,13 @@ const initialData: PaystubData = {
   payFrequency: "bi-weekly",
   adviceNumber: "",
   payType: "hourly",
+  hourlyRate: 0,
+  hoursWorked: 0,
   regularRate: 0,
   regularHours: 0,
   overtimeRate: 0,
   overtimeHours: 0,
+  salary: 0,
   bonusAmount: 0,
   commissionAmount: 0,
   holidayHours: 0,
@@ -165,15 +173,20 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
       const updated = { ...prev, ...updates }
 
       if (updated.payType === "hourly") {
-        const regularPay = updated.regularRate * updated.regularHours
-        const overtimePay = updated.overtimeHours * (updated.overtimeRate || updated.regularRate * 1.5)
-        const holidayPay = updated.holidayHours * updated.regularRate
-        const sickPay = updated.sickHours * updated.regularRate
-        const vacationPay = updated.vacationHours * updated.regularRate
+        // Prefer hourlyRate/hoursWorked if provided; fall back to regularRate/regularHours
+        const baseRate = typeof updated.hourlyRate === "number" ? updated.hourlyRate : updated.regularRate
+        const baseHours = typeof updated.hoursWorked === "number" ? updated.hoursWorked : updated.regularHours
+        const regularPay = baseRate * baseHours
+        const overtimeRate = updated.overtimeRate || baseRate * 1.5
+        const overtimePay = (updated.overtimeHours || 0) * overtimeRate
+        const holidayPay = (updated.holidayHours || 0) * baseRate
+        const sickPay = (updated.sickHours || 0) * baseRate
+        const vacationPay = (updated.vacationHours || 0) * baseRate
         updated.grossPay =
           regularPay + overtimePay + holidayPay + sickPay + vacationPay + updated.bonusAmount + updated.commissionAmount
       } else {
-        updated.grossPay = updated.regularRate + updated.bonusAmount + updated.commissionAmount
+        // Salary-based gross pay
+        updated.grossPay = (updated.salary || 0) + updated.bonusAmount + updated.commissionAmount
       }
 
       // Calculate total deductions
@@ -307,12 +320,13 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
         pay_frequency: paystubData.payFrequency,
         advice_number: paystubData.adviceNumber,
         pay_type: paystubData.payType,
-        regular_rate: paystubData.regularRate,
-        regular_hours: paystubData.regularHours,
+        hourly_rate: paystubData.hourlyRate,
+        hours_worked: paystubData.hoursWorked,
         overtime_rate: paystubData.overtimeRate,
         overtime_hours: paystubData.overtimeHours,
-        bonus_amount: paystubData.bonusAmount,
-        commission_amount: paystubData.commissionAmount,
+        salary: paystubData.salary,
+        bonus: paystubData.bonusAmount,
+        commission: paystubData.commissionAmount,
         holiday_hours: paystubData.holidayHours,
         sick_hours: paystubData.sickHours,
         vacation_hours: paystubData.vacationHours,
