@@ -95,61 +95,94 @@ export default function ContactPage() {
 
       {/* Contact Details Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="max-w-4xl mx-auto">
           
           {/* Contact Information */}
-          <div>
+          <div className="mb-12">
             <h2 className="text-3xl font-bold text-foreground mb-8">Contact Methods</h2>
             
-            {/* WhatsApp */}
-            <div className="rounded-2xl border bg-white shadow-lg ring-1 ring-border p-8 mb-6">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <MessageCircle className="w-6 h-6 text-green-600" />
+            {/* WhatsApp and Signal in one row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              {/* WhatsApp */}
+              <div className="rounded-2xl border bg-white shadow-lg ring-1 ring-border p-8">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <MessageCircle className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-foreground">WhatsApp</h3>
+                    <p className="text-foreground/60">Instant messaging support</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-foreground">WhatsApp</h3>
-                  <p className="text-foreground/60">Instant messaging support</p>
+                <div className="border-t pt-6">
+                  <p className="text-foreground/70 mb-4">Number: <span className="font-semibold">{whatsappNumber}</span></p>
+                  <Button 
+                    asChild
+                    className="w-full bg-green-600 hover:bg-green-700 mb-4"
+                  >
+                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Start WhatsApp Chat
+                    </a>
+                  </Button>
+                  
+                  {/* WhatsApp QR Code */}
+                  <div className="text-center">
+                    <p className="text-foreground/70 mb-3 text-sm font-medium">Scan QR Code:</p>
+                    <div className="inline-block p-3 bg-white rounded-lg border-2 border-green-200 shadow-sm">
+                      <img
+                        src="/whatsappqrcode.png"
+                        alt="WhatsApp QR Code"
+                        className="w-40 h-40 object-contain"
+                      />
+                    </div>
+                    <p className="text-xs text-foreground/50 mt-2">Scan with WhatsApp camera</p>
+                  </div>
                 </div>
               </div>
-              <p className="text-foreground/70 mb-4">Number: <span className="font-semibold">{whatsappNumber}</span></p>
-              <Button 
-                asChild
-                className="w-full bg-green-600 hover:bg-green-700"
-              >
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Start WhatsApp Chat
-                </a>
-              </Button>
-            </div>
 
-            {/* Signal */}
-            <div className="rounded-2xl border bg-white shadow-lg ring-1 ring-border p-8 mb-6">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <MessageCircle className="w-6 h-6 text-blue-600" />
+              {/* Signal */}
+              <div className="rounded-2xl border bg-white shadow-lg ring-1 ring-border p-8">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <MessageCircle className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-foreground">Signal</h3>
+                    <p className="text-foreground/60">Secure messaging alternative</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-foreground">Signal</h3>
-                  <p className="text-foreground/60">Secure messaging alternative</p>
+                <div className="border-t pt-6">
+                  <p className="text-foreground/70 mb-4">Number: <span className="font-semibold">{whatsappNumber}</span></p>
+                  <Button 
+                    asChild
+                    variant="outline"
+                    className="w-full hover:bg-primary/10 mb-4"
+                  >
+                    <a href={signalLink} target="_blank" rel="noopener noreferrer">
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Start Signal Chat
+                    </a>
+                  </Button>
+                  
+                  {/* Signal QR Code */}
+                  <div className="text-center">
+                    <p className="text-foreground/70 mb-3 text-sm font-medium">Scan QR Code:</p>
+                    <div className="inline-block p-3 bg-white rounded-lg border-2 border-blue-200 shadow-sm">
+                      <img
+                        src="/signalqrcode.png"
+                        alt="Signal QR Code"
+                        className="w-40 h-40 object-contain"
+                      />
+                    </div>
+                    <p className="text-xs text-foreground/50 mt-2">Scan with Signal camera</p>
+                  </div>
                 </div>
               </div>
-              <p className="text-foreground/70 mb-4">Number: <span className="font-semibold">{whatsappNumber}</span></p>
-              <Button 
-                asChild
-                variant="outline"
-                className="w-full hover:bg-primary/10"
-              >
-                <a href={signalLink} target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Start Signal Chat
-                </a>
-              </Button>
             </div>
 
             {/* Contact Info */}
-            <div className="rounded-2xl border bg-white shadow-lg ring-1 ring-border p-8">
+            <div className="rounded-2xl border bg-white shadow-lg ring-1 ring-border p-8 mb-8">
               <h3 className="text-xl font-semibold text-foreground mb-4">Other Contact Info</h3>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
@@ -168,7 +201,7 @@ export default function ContactPage() {
             </div>
           </div>
 
-          {/* Services Visual */}
+          {/* Services Section */}
           <div className="relative">
             <div className="absolute -inset-6 -z-10 rounded-2xl bg-gradient-to-tr from-secondary/30 to-primary/20 blur-2xl"></div>
             <div className="rounded-2xl border bg-white shadow-2xl ring-1 ring-border p-8">
