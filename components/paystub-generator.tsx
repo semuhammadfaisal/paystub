@@ -13,6 +13,20 @@ export interface PaystubData {
   // Template Selection
   templateId: string
 
+  // Additional Template Fields
+  coNumber: string
+  fileNumber: string
+  deptNumber: string
+  clockNumber: string
+  vchrNumber: string
+
+  // Payment Details
+  paymentType: string
+  employmentType: string
+  email: string
+  numberOfPaystubs: number
+  taxState: string
+
   // Company Information
   companyName: string
   companyAddress: string
@@ -99,6 +113,16 @@ interface PaystubGeneratorProps {
 
 const initialData: PaystubData = {
   templateId: "template1",
+  coNumber: "",
+  fileNumber: "",
+  deptNumber: "",
+  clockNumber: "",
+  vchrNumber: "",
+  paymentType: "",
+  employmentType: "",
+  email: "",
+  numberOfPaystubs: 1,
+  taxState: "",
   companyName: "",
   companyAddress: "",
   companyCity: "",
@@ -224,6 +248,17 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
     try {
       const dbData = {
         user_id: user.id,
+        template_id: paystubData.templateId,
+        co_number: paystubData.coNumber,
+        file_number: paystubData.fileNumber,
+        dept_number: paystubData.deptNumber,
+        clock_number: paystubData.clockNumber,
+        vchr_number: paystubData.vchrNumber,
+        payment_type: paystubData.paymentType,
+        employment_type: paystubData.employmentType,
+        email: paystubData.email,
+        number_of_paystubs: paystubData.numberOfPaystubs,
+        tax_state: paystubData.taxState,
         employee_name: paystubData.employeeName,
         employee_address: `${paystubData.employeeAddress}, ${paystubData.employeeCity}, ${paystubData.employeeState} ${paystubData.employeeZip}`,
         employee_ssn: paystubData.employeeSSN,
@@ -300,6 +335,16 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
     try {
       const pdfData = {
         template_id: paystubData.templateId,
+        co_number: paystubData.coNumber,
+        file_number: paystubData.fileNumber,
+        dept_number: paystubData.deptNumber,
+        clock_number: paystubData.clockNumber,
+        vchr_number: paystubData.vchrNumber,
+        payment_type: paystubData.paymentType,
+        employment_type: paystubData.employmentType,
+        email: paystubData.email,
+        number_of_paystubs: paystubData.numberOfPaystubs,
+        tax_state: paystubData.taxState,
         employee_name: paystubData.employeeName,
         employee_address: `${paystubData.employeeAddress}, ${paystubData.employeeCity}, ${paystubData.employeeState} ${paystubData.employeeZip}`,
         employee_ssn: paystubData.employeeSSN,

@@ -5,7 +5,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           <div>
             <div className="mb-6">
-              <h3 className="text-2xl font-light text-gray-900 mb-2 tracking-tight">SRS Financials</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">SRS Financials</h3>
             </div>
             <p className="text-gray-600 font-light leading-relaxed text-sm mb-6">
               SRS Financials offers fast, accurate paystubs, tax returns, and proof of income documents. We provide personalized support and secure, reliable service. Your trusted partner for all financial documentation needs.
@@ -27,7 +27,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-light text-gray-900 mb-6 tracking-tight">Services</h4>
+            <h4 className="font-bold text-gray-900 mb-6 tracking-tight">Services</h4>
             <ul className="space-y-3 text-sm text-gray-600 font-light">
               <li>
                 <a href="#" className="hover:text-[#239BA0] transition-colors duration-200">
@@ -53,7 +53,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-light text-gray-900 mb-6 tracking-tight">Support</h4>
+            <h4 className="font-bold text-gray-900 mb-6 tracking-tight">Support</h4>
             <ul className="space-y-3 text-sm text-gray-600 font-light">
               <li>
                 <a href="#" className="hover:text-[#239BA0] transition-colors duration-200">
@@ -79,7 +79,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-light text-gray-900 mb-6 tracking-tight">Legal</h4>
+            <h4 className="font-bold text-gray-900 mb-6 tracking-tight">Legal</h4>
             <ul className="space-y-3 text-sm text-gray-600 font-light">
               <li>
                 <a href="#" className="hover:text-[#239BA0] transition-colors duration-200">

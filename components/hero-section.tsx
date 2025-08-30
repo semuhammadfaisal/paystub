@@ -8,9 +8,9 @@ export function HeroSection() {
     <section id="hero" className="relative overflow-hidden">
       {/* Decorative background */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-secondary/30 blur-3xl"></div>
-        <div className="absolute top-1/3 -right-16 h-72 w-72 rounded-full bg-primary/20 blur-3xl"></div>
-        <div className="absolute -bottom-24 left-1/4 h-56 w-56 rounded-full bg-secondary/20 blur-3xl"></div>
+        <div className="absolute -top-48 -left-48 h-96 w-96 rounded-full bg-secondary/30 blur-3xl"></div>
+        <div className="absolute top-1/3 -right-16 h-96 w-96 rounded-full bg-primary/20 blur-3xl"></div>
+        <div className="absolute -bottom-24 left-1/4 h-96 w-96  rounded-full bg-secondary/20 blur-3xl"></div>
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
@@ -74,7 +74,7 @@ export function HeroSection() {
             <div className="absolute -inset-6 -z-10 rounded-2xl bg-gradient-to-tr from-secondary/30 to-primary/20 blur-2xl"></div>
             <div className="rounded-2xl border bg-white shadow-2xl ring-1 ring-border overflow-hidden">
               <img
-                src="/paystubheroimage.png"
+                src="/paystubheroimag.png"
                 alt="Paystub preview mockup"
                 className="w-full h-full object-cover"
               />

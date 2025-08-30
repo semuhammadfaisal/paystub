@@ -47,7 +47,7 @@ export function PricingSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-20">
-          <h2 className="text-4xl font-light text-gray-900 mb-4 tracking-tight">
+          <h2 className="text-4xl font-bold text-gray-900 mb-4 tracking-tight">
             Simple, Transparent Pricing
           </h2>
           <p className="text-lg text-gray-600 font-light max-w-2xl mx-auto leading-relaxed">
@@ -78,7 +78,7 @@ export function PricingSection() {
               <CardContent className="p-8">
                 {/* Package Name & Description */}
                 <div className="mb-8">
-                  <h3 className="text-2xl font-light text-gray-900 mb-2 tracking-tight">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">
                     {pkg.name}
                   </h3>
                   <p className="text-gray-600 text-sm font-light leading-relaxed">

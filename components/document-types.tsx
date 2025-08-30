@@ -1,64 +1,57 @@
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import Link from "next/link"
 
 export function DocumentTypes() {
   const documents = [
     {
-      title: "Paystubs",
-      image: "/images/paystub-detailed.png",
-      buttonText: "GET YOUR PAYSTUBS",
+      title: "Paystub",
+      image: "/paystub.jpg",
       href: "/create-paystub",
+      cta: "Create your paystub",
     },
     {
-      title: "W2 Form",
-      image: "/images/w2-form-detailed.png",
-      buttonText: "GET YOUR W2 FORM",
+      title: "W-2",
+      image: "/w2.jpg",
       href: "/create-w2",
+      cta: "Create your W-2",
     },
     {
-      title: "Tax Return",
-      image: "/images/tax-return-detailed.png",
-      buttonText: "GET YOUR TAX RETURN",
-      href: "/create-tax-return", // Updated href to point to actual tax return generator
-    },
-    {
-      title: "1099-Misc",
-      image: "/images/1099-misc-detailed.png",
-      buttonText: "GET YOUR 1099-MISC",
+      title: "1099-MISC",
+      image: "/1099.jpg",
       href: "/create-1099",
+      cta: "Create your 1099-MISC",
     },
   ]
 
   return (
-    <section id="documents" className="py-16 bg-gradient-to-r from-secondary via-secondary/80 to-secondary">
+    <section id="documents" className="bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-8">
-          <h2 className="text-white text-3xl font-bold">Documents</h2>
-          <p className="text-white/90 mt-2">Paystub, W‑2, 1099‑MISC and Tax Return — choose and generate in minutes.</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x">
           {documents.map((doc, index) => (
-            <div key={index} className="text-center group">
-              <h3 className="text-white text-lg font-bold mb-6">{doc.title}</h3>
+            <div key={index} className="flex flex-col items-stretch">
+              {/* Top Title */}
+              <div className="py-10 md:py-12 text-center">
+                <h3 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900">
+                  {doc.title}
+                </h3>
+              </div>
 
-              <Card className="bg-white p-6 rounded-2xl shadow-lg mb-6 transform group-hover:scale-105 transition-all duration-300 group-hover:shadow-xl">
-                <div className="aspect-[3/4] flex items-center justify-center">
-                  <img
-                    src={doc.image || "/placeholder.svg"}
-                    alt={`${doc.title} template`}
-                    className="w-full h-full object-contain rounded-lg"
-                  />
-                </div>
-              </Card>
+              {/* Illustration */}
+              <div className="flex-1 flex items-center justify-center py-10 min-h-[300px] w-full">
+                <img
+                  src={doc.image || "/placeholder.svg"}
+                  alt={`${doc.title} template`}
+                  className="w-72 md:w-80 h-auto object-contain drop-shadow mx-auto"
+                />
+              </div>
 
-              <Button
-                asChild={doc.href !== "#"}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-sm px-6 py-2 transform group-hover:scale-105 transition-all duration-200"
-                disabled={doc.href === "#"}
+              {/* Bottom full-width CTA bar */}
+              <Link
+                href={doc.href}
+                className="block w-full bg-gradient-to-r from-[#2dbcc1] to-[#1e7d85] text-white text-xl md:text-2xl font-bold text-center py-6"
               >
-                {doc.href !== "#" ? <Link href={doc.href}>{doc.buttonText}</Link> : <span>{doc.buttonText}</span>}
-              </Button>
+                {doc.cta} 
+                <span aria-hidden>→</span>
+              </Link>
             </div>
           ))}
         </div>

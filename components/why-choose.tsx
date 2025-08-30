@@ -34,7 +34,7 @@ export function WhyChoose() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-20">
-          <h2 className="text-4xl font-light text-gray-900 mb-4 tracking-tight">
+          <h2 className="text-4xl font-bold text-gray-900 mb-4 tracking-tight">
             Why Choose SRS Financials?
           </h2>
           <p className="text-lg text-gray-600 font-light max-w-3xl mx-auto leading-relaxed">
@@ -56,7 +56,7 @@ export function WhyChoose() {
                   <div className="w-12 h-12 flex items-center justify-center rounded-none bg-[#239BA0]/10">
                     <item.icon className="w-6 h-6 text-[#239BA0]" />
                   </div>
-                  <h3 className="text-xl font-light text-gray-900 tracking-tight">
+                  <h3 className="text-xl font-bold text-gray-900 tracking-tight">
                     {item.title}
                   </h3>
                 </div>
