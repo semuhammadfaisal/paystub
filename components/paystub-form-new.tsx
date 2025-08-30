@@ -20,8 +20,8 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
 
   return (
     <div className="space-y-0">
-      {/* Teal Header */}
-      <div className="bg-teal-500 text-white px-6 py-4 rounded-t-lg">
+      {/* Custom Teal Header */}
+      <div className="bg-primary text-primary-foreground px-6 py-4 rounded-t-lg">
         <div className="flex items-center gap-3">
           <span className="text-lg font-bold">STEP 2</span>
           <span className="text-lg">Paystub Details</span>
@@ -47,13 +47,13 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
               >
                 <ToggleGroupItem 
                   value="hourly" 
-                  className="flex-1 data-[state=on]:bg-teal-500 data-[state=on]:text-white data-[state=on]:border-teal-500 border-teal-500 text-teal-500 hover:bg-teal-50"
+                  className="flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary border-primary text-primary hover:bg-primary/10"
                 >
                   ✓ HOURLY
                 </ToggleGroupItem>
                 <ToggleGroupItem 
                   value="salary" 
-                  className="flex-1 data-[state=on]:bg-teal-500 data-[state=on]:text-white data-[state=on]:border-teal-500 border-teal-500 text-teal-500 hover:bg-teal-50"
+                  className="flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary border-primary text-primary hover:bg-primary/10"
                 >
                   SALARY
                 </ToggleGroupItem>
@@ -63,7 +63,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
             <div className="space-y-3">
               <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 Employment Type
-                <div className="w-4 h-4 bg-teal-500 rounded-full flex items-center justify-center">
+                <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center">
                   <span className="text-white text-xs">?</span>
                 </div>
               </Label>
@@ -75,13 +75,13 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
               >
                 <ToggleGroupItem 
                   value="employee" 
-                  className="flex-1 data-[state=on]:bg-teal-500 data-[state=on]:text-white data-[state=on]:border-teal-500 border-teal-500 text-teal-500 hover:bg-teal-50"
+                  className="flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary border-primary text-primary hover:bg-primary/10"
                 >
                   ✓ EMPLOYEE
                 </ToggleGroupItem>
                 <ToggleGroupItem 
                   value="contractor" 
-                  className="flex-1 data-[state=on]:bg-teal-500 data-[state=on]:text-white data-[state=on]:border-teal-500 border-teal-500 text-teal-500 hover:bg-teal-50"
+                  className="flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary border-primary text-primary hover:bg-primary/10"
                 >
                   CONTRACTOR
                 </ToggleGroupItem>
@@ -91,7 +91,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
             <div className="space-y-3">
               <Label htmlFor="email" className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 Email address *
-                <div className="w-4 h-4 bg-teal-500 rounded-full flex items-center justify-center">
+                <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center">
                   <span className="text-white text-xs">?</span>
                 </div>
               </Label>
@@ -100,7 +100,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                 type="email"
                 value={data.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
-                className="border border-gray-300 rounded px-3 py-2 focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                className="border border-gray-300 rounded px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary"
                 placeholder=""
                 required
               />
@@ -149,7 +149,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
             <div className="space-y-3">
               <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 State to be used in tax calculations
-                <div className="w-4 h-4 bg-teal-500 rounded-full flex items-center justify-center">
+                <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center">
                   <span className="text-white text-xs">?</span>
                 </div>
               </Label>
@@ -217,8 +217,8 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
 
       {/* Company Information Section */}
       <div className="space-y-0 mt-8">
-        {/* Teal Header */}
-        <div className="bg-teal-500 text-white px-6 py-4 rounded-t-lg">
+        {/* Custom Teal Header */}
+        <div className="bg-primary text-primary-foreground px-6 py-4 rounded-t-lg">
           <div className="flex items-center gap-3">
             <span className="text-lg font-bold">STEP 3</span>
             <span className="text-lg">Company Information</span>
@@ -363,8 +363,8 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
 
       {/* Employee Information Section */}
       <div className="space-y-0 mt-8">
-        {/* Teal Header */}
-        <div className="bg-teal-500 text-white px-6 py-4 rounded-t-lg">
+        {/* Custom Teal Header */}
+        <div className="bg-primary text-primary-foreground px-6 py-4 rounded-t-lg">
           <div className="flex items-center gap-3">
             <span className="text-lg font-bold">STEP 4</span>
             <span className="text-lg">Employee Information</span>
@@ -558,13 +558,13 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                 >
                   <ToggleGroupItem 
                     value="single" 
-                    className="flex-1 data-[state=on]:bg-teal-500 data-[state=on]:text-white data-[state=on]:border-teal-500 border-teal-500 text-teal-500 hover:bg-teal-50"
+                    className="flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary border-primary text-primary hover:bg-primary/10"
                   >
                     ✓ SINGLE
                   </ToggleGroupItem>
                   <ToggleGroupItem 
                     value="married" 
-                    className="flex-1 data-[state=on]:bg-teal-500 data-[state=on]:text-white data-[state=on]:border-teal-500 border-teal-500 text-teal-500 hover:bg-teal-50"
+                    className="flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary border-primary text-primary hover:bg-primary/10"
                   >
                     MARRIED
                   </ToggleGroupItem>
@@ -581,13 +581,13 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                 >
                   <ToggleGroupItem 
                     value="no" 
-                    className="flex-1 data-[state=on]:bg-teal-500 data-[state=on]:text-white data-[state=on]:border-teal-500 border-teal-500 text-teal-500 hover:bg-teal-50"
+                    className="flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary border-primary text-primary hover:bg-primary/10"
                   >
                     ✓ NO
                   </ToggleGroupItem>
                   <ToggleGroupItem 
                     value="yes" 
-                    className="flex-1 data-[state=on]:bg-teal-500 data-[state=on]:text-white data-[state=on]:border-teal-500 border-teal-500 text-teal-500 hover:bg-teal-50"
+                    className="flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary border-primary text-primary hover:bg-primary/10"
                   >
                     YES
                   </ToggleGroupItem>
@@ -600,8 +600,8 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
 
       {/* STEP 5 - Earnings Statement Section */}
       <div className="space-y-0 mt-8">
-        {/* Teal Header */}
-        <div className="bg-teal-500 text-white px-6 py-4 rounded-t-lg">
+        {/* Custom Teal Header */}
+        <div className="bg-primary text-primary-foreground px-6 py-4 rounded-t-lg">
           <div className="flex items-center gap-3">
             <span className="text-lg font-bold">STEP 5</span>
             <span className="text-lg">Earnings Statement</span>
@@ -609,14 +609,14 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
         </div>
         
         {/* Paystub Selector */}
-        <div className="bg-teal-500 text-white px-6 py-3">
+        <div className="bg-primary text-primary-foreground px-6 py-3">
           <Select
             value={`PAYSTUB #${data.payPeriodNumber} - Pay period: ${data.payPeriodStart} to ${data.payPeriodEnd}`}
             onValueChange={(value) => {
               // Handle paystub selection if needed
             }}
           >
-            <SelectTrigger className="bg-teal-500 border-none text-white hover:bg-teal-600 focus:ring-0 focus:ring-offset-0">
+            <SelectTrigger className="bg-primary border-none text-primary-foreground hover:bg-primary/90 focus:ring-0 focus:ring-offset-0">
               <SelectValue placeholder="PAYSTUB #1 - Pay period: 08/17/2025 to 08/30/2025" />
             </SelectTrigger>
             <SelectContent>
@@ -659,7 +659,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700 flex items-center gap-1">
                   Pay period 
-                  <div className="w-4 h-4 bg-teal-500 rounded-full flex items-center justify-center">
+                  <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center">
                     <span className="text-white text-xs">?</span>
                   </div>
                 </Label>
@@ -668,21 +668,21 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     type="date"
                     value={data.payPeriodStart}
                     onChange={(e) => handleInputChange("payPeriodStart", e.target.value)}
-                    className="border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
+                                            className="border-b-2 border-primary rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
                   />
                   <span className="text-gray-400">-</span>
                   <Input
                     type="date"
                     value={data.payPeriodEnd}
                     onChange={(e) => handleInputChange("payPeriodEnd", e.target.value)}
-                    className="border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
+                                            className="border-b-2 border-primary rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
                   />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700 flex items-center gap-1">
                   Pay date
-                  <div className="w-4 h-4 bg-teal-500 rounded-full flex items-center justify-center">
+                  <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center">
                     <span className="text-white text-xs">?</span>
                   </div>
                 </Label>
@@ -690,7 +690,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                   type="date"
                   value={data.payDate}
                   onChange={(e) => handleInputChange("payDate", e.target.value)}
-                  className="border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
+                                          className="border-b-2 border-primary rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
                 />
               </div>
             </div>
@@ -708,7 +708,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <th className="text-center p-4 text-sm font-semibold text-gray-700 border-r border-gray-200">TOTAL</th>
                     <th className="text-center p-4 text-sm font-semibold text-gray-700 border-r border-gray-200 flex items-center justify-center gap-1">
                       PRIOR YTD
-                      <div className="w-4 h-4 bg-teal-500 rounded-full flex items-center justify-center">
+                      <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center">
                         <span className="text-white text-xs">?</span>
                       </div>
                     </th>
@@ -784,7 +784,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-center text-sm">0.00</td>
                   </tr>
                   <tr className="border-b border-gray-200">
-                    <td className="p-4 text-teal-500 text-sm cursor-pointer border-r border-gray-200">+ Add earnings</td>
+                    <td className="p-4 text-primary text-sm cursor-pointer border-r border-gray-200">+ Add earnings</td>
                     <td className="p-4 border-r border-gray-200"></td>
                     <td className="p-4 border-r border-gray-200"></td>
                     <td className="p-4 border-r border-gray-200"></td>
@@ -920,7 +920,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     </td>
                   </tr>
                   <tr className="border-b border-gray-200">
-                    <td className="p-4 text-teal-500 text-sm cursor-pointer border-r border-gray-200">+ Add deduction</td>
+                    <td className="p-4 text-primary text-sm cursor-pointer border-r border-gray-200">+ Add deduction</td>
                     <td className="p-4 border-r border-gray-200"></td>
                     <td className="p-4 border-r border-gray-200"></td>
                     <td className="p-4"></td>
