@@ -1,13 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { PaystubForm } from "@/components/paystub-form"
+import { PaystubForm } from "@/components/paystub-form-new"
 import { PaystubPreview } from "@/components/paystub-preview"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Save, Download } from "lucide-react"
 import { savePaystub } from "@/lib/actions"
 import { generatePaystubPDF, downloadPDF } from "@/lib/pdf-generator"
+import { StepHeader } from "@/components/step-header"
 
 export interface PaystubData {
   // Template Selection
@@ -30,6 +31,7 @@ export interface PaystubData {
   // Company Information
   companyName: string
   companyAddress: string
+  companyAddress2?: string
   companyCity: string
   companyState: string
   companyZip: string
@@ -40,6 +42,7 @@ export interface PaystubData {
   // Employee Information
   employeeName: string
   employeeAddress: string
+  employeeAddress2?: string
   employeeCity: string
   employeeState: string
   employeeZip: string
@@ -55,7 +58,15 @@ export interface PaystubData {
   payPeriodStart: string
   payPeriodEnd: string
   payDate: string
-  payFrequency: "weekly" | "bi-weekly" | "semi-monthly" | "monthly"
+  payFrequency:
+    | "daily"
+    | "weekly"
+    | "bi-weekly"
+    | "semi-monthly"
+    | "monthly"
+    | "quarterly"
+    | "semi-annually"
+    | "annually"
   adviceNumber: string
 
   // Earnings Details
@@ -195,6 +206,65 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
   const updatePaystubData = (updates: Partial<PaystubData>) => {
     setPaystubData((prev) => {
       const updated = { ...prev, ...updates }
+
+      // Auto-calculate period end and pay date when frequency or start changes
+      const shouldRecalculate =
+        typeof updates.payPeriodStart !== "undefined" || typeof updates.payFrequency !== "undefined"
+      const startDateStr = updated.payPeriodStart
+      if (shouldRecalculate && startDateStr) {
+        const base = new Date(startDateStr)
+        const end = new Date(base.getTime())
+        const pay = new Date(base.getTime())
+        switch (updated.payFrequency) {
+          case "daily":
+            // same day
+            end.setDate(base.getDate())
+            pay.setTime(end.getTime())
+            break
+          case "weekly":
+            end.setDate(end.getDate() + 6)
+            pay.setTime(end.getTime())
+            break
+          case "bi-weekly":
+            end.setDate(end.getDate() + 13)
+            pay.setTime(end.getTime())
+            break
+          case "semi-monthly":
+            // 1st-15th or 16th-end of month
+            const day = base.getDate()
+            if (day <= 15) {
+              end.setDate(15)
+            } else {
+              // last day of month
+              end.setMonth(end.getMonth() + 1, 0)
+            }
+            pay.setTime(end.getTime())
+            break
+          case "monthly":
+            end.setMonth(end.getMonth() + 1)
+            end.setDate(end.getDate() - 1)
+            pay.setTime(end.getTime())
+            break
+          case "quarterly":
+            end.setMonth(end.getMonth() + 3)
+            end.setDate(end.getDate() - 1)
+            pay.setTime(end.getTime())
+            break
+          case "semi-annually":
+            end.setMonth(end.getMonth() + 6)
+            end.setDate(end.getDate() - 1)
+            pay.setTime(end.getTime())
+            break
+          case "annually":
+            end.setFullYear(end.getFullYear() + 1)
+            end.setDate(end.getDate() - 1)
+            pay.setTime(end.getTime())
+            break
+        }
+        const toISO = (d: Date) => d.toISOString().slice(0, 10)
+        updated.payPeriodEnd = toISO(end)
+        updated.payDate = toISO(pay)
+      }
 
       if (updated.payType === "hourly") {
         // Prefer hourlyRate/hoursWorked if provided; fall back to regularRate/regularHours
@@ -415,16 +485,16 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="p-6">
-          <h2 className="text-xl font-bold text-primary mb-6">Paystub Information</h2>
+      <div className="space-y-8">
+        <div className="bg-white">
           <PaystubForm data={paystubData} onUpdate={updatePaystubData} />
-        </Card>
+        </div>
 
-        <Card className="p-6">
-          <h2 className="text-xl font-bold text-primary mb-6">Preview</h2>
+        <StepHeader step={6} title="Review" />
+
+        <div className="bg-white">
           <PaystubPreview data={paystubData} />
-        </Card>
+        </div>
       </div>
 
       <div className="flex justify-center space-x-4">

@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { StepHeader } from "@/components/step-header"
 import type { PaystubData } from "@/components/paystub-generator"
 
 interface PaystubFormProps {
@@ -18,19 +19,528 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <Tabs defaultValue="template" className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="template">Template</TabsTrigger>
-          <TabsTrigger value="payment">Payment</TabsTrigger>
-          <TabsTrigger value="employee">Employee</TabsTrigger>
-          <TabsTrigger value="employer">Employer</TabsTrigger>
-          <TabsTrigger value="pay">Pay Info</TabsTrigger>
-          <TabsTrigger value="deductions">Deductions</TabsTrigger>
-          <TabsTrigger value="ytd">YTD Totals</TabsTrigger>
-        </TabsList>
+    <div className="space-y-10">
+      <StepHeader step={2} title="Paystub Details" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <Label>Payment Type</Label>
+            <ToggleGroup
+              type="single"
+              value={data.payType}
+              onValueChange={(value) => value && handleInputChange("payType", value as "hourly" | "salary")}
+              className="w-full max-w-sm"
+            >
+              <ToggleGroupItem value="hourly" className="flex-1">HOURLY</ToggleGroupItem>
+              <ToggleGroupItem value="salary" className="flex-1">SALARY</ToggleGroupItem>
+            </ToggleGroup>
+          </div>
 
-        <TabsContent value="template" className="space-y-4">
+          <div className="space-y-2">
+            <Label>Employment Type</Label>
+            <ToggleGroup
+              type="single"
+              value={data.employmentType}
+              onValueChange={(value) => value && handleInputChange("employmentType", value)}
+              className="w-full max-w-sm"
+            >
+              <ToggleGroupItem value="employee" className="flex-1">EMPLOYEE</ToggleGroupItem>
+              <ToggleGroupItem value="contractor" className="flex-1">CONTRACTOR</ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+
+          <div>
+            <Label htmlFor="email">Email address *</Label>
+            <Input
+              id="email"
+              type="email"
+              value={data.email}
+              onChange={(e) => handleInputChange("email", e.target.value)}
+              placeholder=""
+              required
+            />
+          </div>
+        </div>
+
+    <div className="space-y-6">
+          <div>
+            <Label>Payment frequency</Label>
+            <Select value={data.payFrequency} onValueChange={(value) => handleInputChange("payFrequency", value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select frequency" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly (ex: every Friday)</SelectItem>
+                <SelectItem value="bi-weekly">Bi-Weekly (ex: every other Wednesday)</SelectItem>
+                <SelectItem value="semi-monthly">Semi-Monthly (ex: 1st and 15th)</SelectItem>
+                <SelectItem value="monthly">Monthly (ex: 1st of month only)</SelectItem>
+                <SelectItem value="quarterly">Quarterly</SelectItem>
+                <SelectItem value="semi-annually">Semi-Annually</SelectItem>
+                <SelectItem value="annually">Annually</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Number of paystubs required</Label>
+            <Select
+              value={data.numberOfPaystubs.toString()}
+              onValueChange={(value) => handleInputChange("numberOfPaystubs", parseInt(value))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 paystub</SelectItem>
+                <SelectItem value="2">2 paystubs</SelectItem>
+                <SelectItem value="3">3 paystubs</SelectItem>
+                <SelectItem value="6">6 paystubs</SelectItem>
+                <SelectItem value="12">12 paystubs</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>State to be used in tax calculations</Label>
+            <Select value={data.taxState} onValueChange={(value) => handleInputChange("taxState", value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="State *" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="AL">Alabama</SelectItem>
+                <SelectItem value="AK">Alaska</SelectItem>
+                <SelectItem value="AZ">Arizona</SelectItem>
+                <SelectItem value="AR">Arkansas</SelectItem>
+                <SelectItem value="CA">California</SelectItem>
+                <SelectItem value="CO">Colorado</SelectItem>
+                <SelectItem value="CT">Connecticut</SelectItem>
+                <SelectItem value="DE">Delaware</SelectItem>
+                <SelectItem value="FL">Florida</SelectItem>
+                <SelectItem value="GA">Georgia</SelectItem>
+                <SelectItem value="HI">Hawaii</SelectItem>
+                <SelectItem value="ID">Idaho</SelectItem>
+                <SelectItem value="IL">Illinois</SelectItem>
+                <SelectItem value="IN">Indiana</SelectItem>
+                <SelectItem value="IA">Iowa</SelectItem>
+                <SelectItem value="KS">Kansas</SelectItem>
+                <SelectItem value="KY">Kentucky</SelectItem>
+                <SelectItem value="LA">Louisiana</SelectItem>
+                <SelectItem value="ME">Maine</SelectItem>
+                <SelectItem value="MD">Maryland</SelectItem>
+                <SelectItem value="MA">Massachusetts</SelectItem>
+                <SelectItem value="MI">Michigan</SelectItem>
+                <SelectItem value="MN">Minnesota</SelectItem>
+                <SelectItem value="MS">Mississippi</SelectItem>
+                <SelectItem value="MO">Missouri</SelectItem>
+                <SelectItem value="MT">Montana</SelectItem>
+                <SelectItem value="NE">Nebraska</SelectItem>
+                <SelectItem value="NV">Nevada</SelectItem>
+                <SelectItem value="NH">New Hampshire</SelectItem>
+                <SelectItem value="NJ">New Jersey</SelectItem>
+                <SelectItem value="NM">New Mexico</SelectItem>
+                <SelectItem value="NY">New York</SelectItem>
+                <SelectItem value="NC">North Carolina</SelectItem>
+                <SelectItem value="ND">North Dakota</SelectItem>
+                <SelectItem value="OH">Ohio</SelectItem>
+                <SelectItem value="OK">Oklahoma</SelectItem>
+                <SelectItem value="OR">Oregon</SelectItem>
+                <SelectItem value="PA">Pennsylvania</SelectItem>
+                <SelectItem value="RI">Rhode Island</SelectItem>
+                <SelectItem value="SC">South Carolina</SelectItem>
+                <SelectItem value="SD">South Dakota</SelectItem>
+                <SelectItem value="TN">Tennessee</SelectItem>
+                <SelectItem value="TX">Texas</SelectItem>
+                <SelectItem value="UT">Utah</SelectItem>
+                <SelectItem value="VT">Vermont</SelectItem>
+                <SelectItem value="VA">Virginia</SelectItem>
+                <SelectItem value="WA">Washington</SelectItem>
+                <SelectItem value="WV">West Virginia</SelectItem>
+                <SelectItem value="WI">Wisconsin</SelectItem>
+                <SelectItem value="WY">Wyoming</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      {/* Pay Period Section */}
+      <div className="grid grid-cols-2 gap-6 mb-8">
+        <div className="space-y-4">
+          <div>
+            <Label className="text-sm font-medium text-gray-600">Pay period</Label>
+            <div className="flex items-center gap-2 mt-1">
+              <Input
+                type="date"
+                value={data.payPeriodStart}
+                onChange={(e) => handleInputChange("payPeriodStart", e.target.value)}
+                className="text-sm"
+              />
+              <span className="text-gray-400">-</span>
+              <Input
+                type="date"
+                value={data.payPeriodEnd}
+                onChange={(e) => handleInputChange("payPeriodEnd", e.target.value)}
+                className="text-sm"
+              />
+            </div>
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <Label className="text-sm font-medium text-gray-600">Pay date</Label>
+            <Input
+              type="date"
+              value={data.payDate}
+              onChange={(e) => handleInputChange("payDate", e.target.value)}
+              className="text-sm mt-1"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Main Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Left Column - Earnings */}
+        <div className="space-y-6">
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-sm font-semibold text-gray-700 mb-4">EARNINGS</h3>
+            <div className="space-y-3">
+              <div className="grid grid-cols-4 gap-2 text-xs font-medium text-gray-600 pb-2 border-b">
+                <div></div>
+                <div className="text-center">RATE</div>
+                <div className="text-center">HOURS</div>
+                <div className="text-center">TOTAL</div>
+              </div>
+              
+              <div className="grid grid-cols-4 gap-2 items-center">
+                <Label className="text-sm">Regular</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.hourlyRate}
+                  onChange={(e) => handleInputChange("hourlyRate", Number.parseFloat(e.target.value) || 0)}
+                  className="text-sm text-center"
+                  placeholder="20.00"
+                />
+                <Input
+                  type="number"
+                  step="0.5"
+                  value={data.hoursWorked}
+                  onChange={(e) => handleInputChange("hoursWorked", Number.parseFloat(e.target.value) || 0)}
+                  className="text-sm text-center"
+                  placeholder="80"
+                />
+                <div className="text-sm text-center font-medium">
+                  {(data.hourlyRate * data.hoursWorked).toFixed(2)}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-2 items-center">
+                <Label className="text-sm">Overtime</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.overtimeRate}
+                  onChange={(e) => handleInputChange("overtimeRate", Number.parseFloat(e.target.value) || 0)}
+                  className="text-sm text-center"
+                  placeholder="0.00"
+                />
+                <Input
+                  type="number"
+                  step="0.5"
+                  value={data.overtimeHours}
+                  onChange={(e) => handleInputChange("overtimeHours", Number.parseFloat(e.target.value) || 0)}
+                  className="text-sm text-center"
+                  placeholder="0"
+                />
+                <div className="text-sm text-center font-medium">
+                  {(data.overtimeRate * data.overtimeHours).toFixed(2)}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t">
+                <div className="grid grid-cols-4 gap-2 items-center font-semibold">
+                  <div></div>
+                  <div></div>
+                  <div className="text-sm text-center">GROSS PAY</div>
+                  <div className="text-sm text-center">{data.grossPay.toFixed(2)}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* YTD Totals */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="grid grid-cols-3 gap-2 text-xs font-medium text-gray-600 pb-2 border-b">
+              <div className="text-center">PRIOR YTD</div>
+              <div className="text-center">YTD TOTAL</div>
+              <div></div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 items-center mt-2">
+              <Input
+                type="number"
+                step="0.01"
+                value={data.ytdGrossPay - data.grossPay}
+                onChange={(e) => handleInputChange("ytdGrossPay", (Number.parseFloat(e.target.value) || 0) + data.grossPay)}
+                className="text-sm text-center"
+                placeholder="27200.00"
+              />
+              <div className="text-sm text-center font-medium">{data.ytdGrossPay.toFixed(2)}</div>
+              <div></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Deductions */}
+        <div className="space-y-6">
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-sm font-semibold text-gray-700 mb-4">DEDUCTIONS</h3>
+            <div className="space-y-3">
+              <div className="grid grid-cols-4 gap-2 text-xs font-medium text-gray-600 pb-2 border-b">
+                <div></div>
+                <div className="text-center">TOTAL</div>
+                <div className="text-center">PRIOR YTD</div>
+                <div className="text-center">YTD TOTAL</div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-2 items-center">
+                <Label className="text-sm">FICA - Medicare</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.medicare}
+                  onChange={(e) => handleInputChange("medicare", Number.parseFloat(e.target.value) || 0)}
+                  className="text-sm text-center"
+                  placeholder="23.20"
+                />
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.ytdMedicare - data.medicare}
+                  onChange={(e) => handleInputChange("ytdMedicare", (Number.parseFloat(e.target.value) || 0) + data.medicare)}
+                  className="text-sm text-center"
+                  placeholder="394.40"
+                />
+                <div className="text-sm text-center font-medium">{data.ytdMedicare.toFixed(2)}</div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-2 items-center">
+                <Label className="text-sm">FICA - Social Security</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.socialSecurity}
+                  onChange={(e) => handleInputChange("socialSecurity", Number.parseFloat(e.target.value) || 0)}
+                  className="text-sm text-center"
+                  placeholder="99.20"
+                />
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.ytdSocialSecurity - data.socialSecurity}
+                  onChange={(e) => handleInputChange("ytdSocialSecurity", (Number.parseFloat(e.target.value) || 0) + data.socialSecurity)}
+                  className="text-sm text-center"
+                  placeholder="1686.40"
+                />
+                <div className="text-sm text-center font-medium">{data.ytdSocialSecurity.toFixed(2)}</div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-2 items-center">
+                <Label className="text-sm">Federal Tax</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.federalTax}
+                  onChange={(e) => handleInputChange("federalTax", Number.parseFloat(e.target.value) || 0)}
+                  className="text-sm text-center"
+                  placeholder="113.60"
+                />
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.ytdFederalTax - data.federalTax}
+                  onChange={(e) => handleInputChange("ytdFederalTax", (Number.parseFloat(e.target.value) || 0) + data.federalTax)}
+                  className="text-sm text-center"
+                  placeholder="1931.20"
+                />
+                <div className="text-sm text-center font-medium">{data.ytdFederalTax.toFixed(2)}</div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-2 items-center">
+                <Label className="text-sm">State Tax</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.stateTax}
+                  onChange={(e) => handleInputChange("stateTax", Number.parseFloat(e.target.value) || 0)}
+                  className="text-sm text-center"
+                  placeholder="0.00"
+                />
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.ytdStateTax - data.stateTax}
+                  onChange={(e) => handleInputChange("ytdStateTax", (Number.parseFloat(e.target.value) || 0) + data.stateTax)}
+                  className="text-sm text-center"
+                  placeholder="0.00"
+                />
+                <div className="text-sm text-center font-medium">{data.ytdStateTax.toFixed(2)}</div>
+              </div>
+
+              <div className="pt-2 border-t">
+                <div className="grid grid-cols-4 gap-2 items-center font-semibold">
+                  <div className="text-sm">Deduction Total</div>
+                  <div className="text-sm text-center">{data.totalDeductions.toFixed(2)}</div>
+                  <div className="text-sm text-center">{(data.ytdTotalDeductions - data.totalDeductions).toFixed(2)}</div>
+                  <div className="text-sm text-center">{data.ytdTotalDeductions.toFixed(2)}</div>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-gray-400">
+                <div className="grid grid-cols-4 gap-2 items-center font-bold">
+                  <div className="text-sm">Net Pay</div>
+                  <div className="text-sm text-center">{data.netPay.toFixed(2)}</div>
+                  <div className="text-sm text-center">{(data.ytdNetPay - data.netPay).toFixed(2)}</div>
+                  <div className="text-sm text-center">{data.ytdNetPay.toFixed(2)}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Employee and Company Information */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Employee Information</h3>
+          <div>
+            <Label htmlFor="employeeName">Full Name</Label>
+            <Input
+              id="employeeName"
+              value={data.employeeName}
+              onChange={(e) => handleInputChange("employeeName", e.target.value)}
+              placeholder="John Doe"
+            />
+          </div>
+          <div>
+            <Label htmlFor="employeeAddress">Address</Label>
+            <Input
+              id="employeeAddress"
+              value={data.employeeAddress}
+              onChange={(e) => handleInputChange("employeeAddress", e.target.value)}
+              placeholder="123 Main Street"
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <Label htmlFor="employeeCity">City</Label>
+              <Input
+                id="employeeCity"
+                value={data.employeeCity}
+                onChange={(e) => handleInputChange("employeeCity", e.target.value)}
+                placeholder="New York"
+              />
+            </div>
+            <div>
+              <Label htmlFor="employeeState">State</Label>
+              <Input
+                id="employeeState"
+                value={data.employeeState}
+                onChange={(e) => handleInputChange("employeeState", e.target.value)}
+                placeholder="NY"
+              />
+            </div>
+            <div>
+              <Label htmlFor="employeeZip">ZIP</Label>
+              <Input
+                id="employeeZip"
+                value={data.employeeZip}
+                onChange={(e) => handleInputChange("employeeZip", e.target.value)}
+                placeholder="10001"
+              />
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="employeeSSN">Social Security Number (last 4 digits)</Label>
+            <Input
+              id="employeeSSN"
+              value={data.employeeSSN}
+              onChange={(e) => handleInputChange("employeeSSN", e.target.value)}
+              placeholder="XXXX"
+              maxLength={4}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Company Information</h3>
+          <div>
+            <Label htmlFor="companyName">Company Name *</Label>
+            <Input
+              id="companyName"
+              value={data.companyName}
+              onChange={(e) => handleInputChange("companyName", e.target.value)}
+              placeholder="ABC Corporation"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="companyAddress">Company Address</Label>
+            <Input
+              id="companyAddress"
+              value={data.companyAddress}
+              onChange={(e) => handleInputChange("companyAddress", e.target.value)}
+              placeholder="456 Business Ave"
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <Label htmlFor="companyCity">City</Label>
+              <Input
+                id="companyCity"
+                value={data.companyCity}
+                onChange={(e) => handleInputChange("companyCity", e.target.value)}
+                placeholder="New York"
+              />
+            </div>
+            <div>
+              <Label htmlFor="companyState">State</Label>
+              <Input
+                id="companyState"
+                value={data.companyState}
+                onChange={(e) => handleInputChange("companyState", e.target.value)}
+                placeholder="NY"
+              />
+            </div>
+            <div>
+              <Label htmlFor="companyZip">ZIP</Label>
+              <Input
+                id="companyZip"
+                value={data.companyZip}
+                onChange={(e) => handleInputChange("companyZip", e.target.value)}
+                placeholder="10001"
+              />
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="companyEIN">Employer ID Number (EIN)</Label>
+            <Input
+              id="companyEIN"
+              value={data.companyEIN}
+              onChange={(e) => handleInputChange("companyEIN", e.target.value)}
+              placeholder="XX-XXXXXXX"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="pt-6 border-t">
+        <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Generate Paystub PDF</Button>
+      </div>
+    </div>
+  )
+}
           <div>
             <Label htmlFor="templateId">Template Selection</Label>
             <Select
@@ -556,10 +1066,14 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="daily">Daily</SelectItem>
                 <SelectItem value="weekly">Weekly</SelectItem>
                 <SelectItem value="bi-weekly">Bi-Weekly</SelectItem>
                 <SelectItem value="semi-monthly">Semi-Monthly</SelectItem>
                 <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="quarterly">Quarterly</SelectItem>
+                <SelectItem value="semi-annually">Semi-Annually</SelectItem>
+                <SelectItem value="annually">Annually</SelectItem>
               </SelectContent>
             </Select>
           </div>
