@@ -404,47 +404,37 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
     setIsDownloading(true)
     try {
       const pdfData = {
-        template_id: paystubData.templateId,
-        co_number: paystubData.coNumber,
-        file_number: paystubData.fileNumber,
-        dept_number: paystubData.deptNumber,
-        clock_number: paystubData.clockNumber,
-        vchr_number: paystubData.vchrNumber,
-        payment_type: paystubData.paymentType,
-        employment_type: paystubData.employmentType,
-        email: paystubData.email,
-        number_of_paystubs: paystubData.numberOfPaystubs,
-        tax_state: paystubData.taxState,
+        // Basic employee and employer info
         employee_name: paystubData.employeeName,
         employee_address: `${paystubData.employeeAddress}, ${paystubData.employeeCity}, ${paystubData.employeeState} ${paystubData.employeeZip}`,
         employee_ssn: paystubData.employeeSSN,
         employee_id: paystubData.employeeId,
         employee_phone: paystubData.employeePhone,
-        exemptions: paystubData.exemptions,
-        marital_status: paystubData.maritalStatus,
-        direct_deposit: paystubData.directDeposit,
         employer_name: paystubData.companyName,
         employer_address: `${paystubData.companyAddress}, ${paystubData.companyCity}, ${paystubData.companyState} ${paystubData.companyZip}`,
-        employer_phone: paystubData.companyPhone,
         employer_ein: paystubData.companyEIN,
-        employer_logo: paystubData.companyLogo,
-        pay_period_number: paystubData.payPeriodNumber,
+        employer_phone: paystubData.companyPhone,
+
+        // Pay period details
         pay_period_start: paystubData.payPeriodStart,
         pay_period_end: paystubData.payPeriodEnd,
         pay_date: paystubData.payDate,
         pay_frequency: paystubData.payFrequency,
-        advice_number: paystubData.adviceNumber,
+
+        // Earnings
         pay_type: paystubData.payType,
         hourly_rate: paystubData.hourlyRate,
         hours_worked: paystubData.hoursWorked,
-        overtime_rate: paystubData.overtimeRate,
         overtime_hours: paystubData.overtimeHours,
+        overtime_rate: paystubData.overtimeRate,
         salary: paystubData.salary,
         bonus: paystubData.bonusAmount,
         commission: paystubData.commissionAmount,
         holiday_hours: paystubData.holidayHours,
         sick_hours: paystubData.sickHours,
         vacation_hours: paystubData.vacationHours,
+
+        // Deductions
         federal_tax: paystubData.federalTax,
         state_tax: paystubData.stateTax,
         social_security: paystubData.socialSecurity,
@@ -460,6 +450,8 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
         parking_fee: paystubData.parkingFee,
         union_dues: paystubData.unionDues,
         other_deductions: paystubData.otherDeductions,
+
+        // Year-to-Date totals
         ytd_gross_pay: paystubData.ytdGrossPay,
         ytd_federal_tax: paystubData.ytdFederalTax,
         ytd_state_tax: paystubData.ytdStateTax,
@@ -467,6 +459,8 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
         ytd_medicare: paystubData.ytdMedicare,
         ytd_total_deductions: paystubData.ytdTotalDeductions,
         ytd_net_pay: paystubData.ytdNetPay,
+
+        // Calculated fields
         gross_pay: paystubData.grossPay,
         total_deductions: paystubData.totalDeductions,
         net_pay: paystubData.netPay,

@@ -37,6 +37,7 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
               <div>
                 {data.companyCity || "City"}, {data.companyState || "ST"} {data.companyZip || "ZIP"}
               </div>
+              {data.companyPhone && <div>Phone: {data.companyPhone}</div>}
               <div>EIN: {data.companyEIN || "XX-XXXXXXX"}</div>
             </div>
           </div>
@@ -62,22 +63,33 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
             {data.employeeCity || "City"}, {data.employeeState || "ST"} {data.employeeZip || "ZIP"}
           </div>
           <div>SSN: {maskSSN(data.employeeSSN)}</div>
+          {data.employeeId && <div>Employee ID: {data.employeeId}</div>}
+          {data.employeePhone && <div>Phone: {data.employeePhone}</div>}
         </div>
         <div>
           <h3 className="font-bold text-primary mb-2">PAY INFORMATION</h3>
           <div>Pay Frequency: {data.payFrequency || "Bi-Weekly"}</div>
           <div>Pay Type: {data.payType === "hourly" ? "Hourly" : "Salary"}</div>
-          {data.payType === "hourly" && (
-            <>
-              <div>Hourly Rate: {formatCurrency(data.hourlyRate)}</div>
-              <div>Hours Worked: {data.hoursWorked}</div>
-              {data.overtimeHours > 0 && (
-                <div>
-                  Overtime Hours: {data.overtimeHours} @ {formatCurrency(data.overtimeRate)}
-                </div>
-              )}
-            </>
-          )}
+                      {data.payType === "hourly" && (
+              <>
+                <div>Hourly Rate: {formatCurrency(data.hourlyRate)}</div>
+                <div>Hours Worked: {data.hoursWorked}</div>
+                {data.overtimeHours > 0 && (
+                  <div>
+                    Overtime Hours: {data.overtimeHours} @ {formatCurrency(data.overtimeRate)}
+                  </div>
+                )}
+                {data.holidayHours > 0 && (
+                  <div>Holiday Hours: {data.holidayHours}</div>
+                )}
+                {data.sickHours > 0 && (
+                  <div>Sick Hours: {data.sickHours}</div>
+                )}
+                {data.vacationHours > 0 && (
+                  <div>Vacation Hours: {data.vacationHours}</div>
+                )}
+              </>
+            )}
         </div>
       </div>
 
@@ -103,6 +115,18 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
               <div className="flex justify-between">
                 <span>Salary</span>
                 <span>{formatCurrency(data.salary)}</span>
+              </div>
+            )}
+            {data.bonusAmount > 0 && (
+              <div className="flex justify-between">
+                <span>Bonus</span>
+                <span>{formatCurrency(data.bonusAmount)}</span>
+              </div>
+            )}
+            {data.commissionAmount > 0 && (
+              <div className="flex justify-between">
+                <span>Commission</span>
+                <span>{formatCurrency(data.commissionAmount)}</span>
               </div>
             )}
             <div className="flex justify-between font-bold border-t border-gray-400 pt-1">
@@ -149,6 +173,48 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
               <div className="flex justify-between">
                 <span>401(k)</span>
                 <span>{formatCurrency(data.retirement401k)}</span>
+              </div>
+            )}
+            {data.rothIRA > 0 && (
+              <div className="flex justify-between">
+                <span>Roth IRA</span>
+                <span>{formatCurrency(data.rothIRA)}</span>
+              </div>
+            )}
+            {data.hsa > 0 && (
+              <div className="flex justify-between">
+                <span>HSA</span>
+                <span>{formatCurrency(data.hsa)}</span>
+              </div>
+            )}
+            {data.stateDisability > 0 && (
+              <div className="flex justify-between">
+                <span>State Disability</span>
+                <span>{formatCurrency(data.stateDisability)}</span>
+              </div>
+            )}
+            {data.visionInsurance > 0 && (
+              <div className="flex justify-between">
+                <span>Vision Insurance</span>
+                <span>{formatCurrency(data.visionInsurance)}</span>
+              </div>
+            )}
+            {data.lifeInsurance > 0 && (
+              <div className="flex justify-between">
+                <span>Life Insurance</span>
+                <span>{formatCurrency(data.lifeInsurance)}</span>
+              </div>
+            )}
+            {data.parkingFee > 0 && (
+              <div className="flex justify-between">
+                <span>Parking Fee</span>
+                <span>{formatCurrency(data.parkingFee)}</span>
+              </div>
+            )}
+            {data.unionDues > 0 && (
+              <div className="flex justify-between">
+                <span>Union Dues</span>
+                <span>{formatCurrency(data.unionDues)}</span>
               </div>
             )}
             {data.otherDeductions > 0 && (

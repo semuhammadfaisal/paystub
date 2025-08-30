@@ -1,16 +1,25 @@
 "use client"
 
 export interface PaystubData {
+  // Basic employee and employer info
   employee_name: string
   employee_address: string
   employee_ssn: string
+  employee_id?: string
+  employee_phone?: string
   employer_name: string
   employer_address: string
   employer_ein: string
+  employer_phone?: string
+
+  // Pay period details
   pay_period_start: string
   pay_period_end: string
   pay_date: string
   pay_frequency: string
+
+  // Earnings
+  pay_type: "hourly" | "salary"
   hourly_rate?: number
   hours_worked?: number
   overtime_hours?: number
@@ -18,17 +27,38 @@ export interface PaystubData {
   salary?: number
   bonus?: number
   commission?: number
+  holiday_hours?: number
+  sick_hours?: number
+  vacation_hours?: number
   gross_pay: number
+
+  // Deductions
   federal_tax: number
   state_tax: number
   social_security: number
   medicare: number
+  state_disability?: number
   health_insurance: number
   dental_insurance: number
+  vision_insurance?: number
+  life_insurance?: number
   retirement_401k: number
+  roth_ira?: number
+  hsa?: number
+  parking_fee?: number
+  union_dues?: number
   other_deductions: number
   total_deductions: number
   net_pay: number
+
+  // Year-to-Date totals
+  ytd_gross_pay?: number
+  ytd_federal_tax?: number
+  ytd_state_tax?: number
+  ytd_social_security?: number
+  ytd_medicare?: number
+  ytd_total_deductions?: number
+  ytd_net_pay?: number
 }
 
 export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
@@ -133,11 +163,11 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     drawText(data.employer_address || "Company Address", margin + 30, y + 50, "12px 'Times New Roman'", "#4b5563")
     drawText(`EIN: ${data.employer_ein || "XX-XXXXXXX"}`, margin + 30, y + 70, "12px 'Times New Roman'", "#4b5563")
 
-    // Paystub box (teal background)
+    // Paystub box (custom teal background)
     const payStubBoxWidth = 120
     const payStubBoxHeight = 30
     const payStubBoxX = canvasWidth - margin - payStubBoxWidth - 30
-    drawRect(payStubBoxX, y - 5, payStubBoxWidth, payStubBoxHeight, "#14b8a6")
+    drawRect(payStubBoxX, y - 5, payStubBoxWidth, payStubBoxHeight, "#239BA0")
     drawText("Paystub", payStubBoxX + payStubBoxWidth / 2, y + 10, "bold 14px 'Times New Roman'", "#ffffff", "center")
 
     // Pay dates (right aligned)
@@ -154,7 +184,7 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     const rightColumnX = margin + 30 + (contentWidth / 2) + 20
     
     // Left column - Employee Information
-    drawText("EMPLOYEE INFORMATION", leftColumnX, y, "bold 13px 'Times New Roman'", "#14b8a6")
+    drawText("EMPLOYEE INFORMATION", leftColumnX, y, "bold 13px 'Times New Roman'", "#239BA0")
     drawLine(leftColumnX, y + 8, leftColumnX + 180, y + 8, "#cbd5e1", 1)
     
     let leftY = y + 30
@@ -163,9 +193,18 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     drawText(data.employee_address || "Employee Address", leftColumnX, leftY, "12px 'Times New Roman'", "#1f2937")
     leftY += 20
     drawText(`SSN: ${maskSSN(data.employee_ssn)}`, leftColumnX, leftY, "12px 'Times New Roman'", "#1f2937")
+    leftY += 20
+    if (data.employee_id) {
+      drawText(`Employee ID: ${data.employee_id}`, leftColumnX, leftY, "12px 'Times New Roman'", "#1f2937")
+      leftY += 20
+    }
+    if (data.employee_phone) {
+      drawText(`Phone: ${data.employee_phone}`, leftColumnX, leftY, "12px 'Times New Roman'", "#1f2937")
+      leftY += 20
+    }
     
     // Right column - Pay Information
-    drawText("PAY INFORMATION", rightColumnX, y, "bold 13px 'Times New Roman'", "#14b8a6")
+    drawText("PAY INFORMATION", rightColumnX, y, "bold 13px 'Times New Roman'", "#239BA0")
     drawLine(rightColumnX, y + 8, rightColumnX + 180, y + 8, "#cbd5e1", 1)
     
     let rightY = y + 30
@@ -202,7 +241,7 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     const columnWidth = 250
     
     // Earnings column
-    drawText("EARNINGS", earningsX, y, "bold 13px 'Times New Roman'", "#14b8a6")
+    drawText("EARNINGS", earningsX, y, "bold 13px 'Times New Roman'", "#239BA0")
     drawLine(earningsX, y + 8, earningsX + columnWidth - 50, y + 8, "#cbd5e1", 1)
     
     let earningsY = y + 30
@@ -213,11 +252,33 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
       drawText(`Regular Pay (${data.hours_worked || 0} hrs)`, earningsX, earningsY, "12px 'Times New Roman'", "#1f2937")
       drawText(formatCurrency(regularPay), earningsX + columnWidth - 50, earningsY, "12px 'Times New Roman'", "#1f2937", "right")
       earningsY += 22
-      
+
       if (data.overtime_hours && data.overtime_hours > 0) {
         const overtimePay = data.overtime_hours * (data.overtime_rate || data.hourly_rate * 1.5)
         drawText(`Overtime Pay (${data.overtime_hours} hrs)`, earningsX, earningsY, "12px 'Times New Roman'", "#1f2937")
         drawText(formatCurrency(overtimePay), earningsX + columnWidth - 50, earningsY, "12px 'Times New Roman'", "#1f2937", "right")
+        earningsY += 22
+      }
+
+      // Additional time-based earnings
+      if (data.holiday_hours && data.holiday_hours > 0) {
+        const holidayPay = data.holiday_hours * (data.hourly_rate || 0)
+        drawText(`Holiday Pay (${data.holiday_hours} hrs)`, earningsX, earningsY, "12px 'Times New Roman'", "#1f2937")
+        drawText(formatCurrency(holidayPay), earningsX + columnWidth - 50, earningsY, "12px 'Times New Roman'", "#1f2937", "right")
+        earningsY += 22
+      }
+
+      if (data.sick_hours && data.sick_hours > 0) {
+        const sickPay = data.sick_hours * (data.hourly_rate || 0)
+        drawText(`Sick Pay (${data.sick_hours} hrs)`, earningsX, earningsY, "12px 'Times New Roman'", "#1f2937")
+        drawText(formatCurrency(sickPay), earningsX + columnWidth - 50, earningsY, "12px 'Times New Roman'", "#1f2937", "right")
+        earningsY += 22
+      }
+
+      if (data.vacation_hours && data.vacation_hours > 0) {
+        const vacationPay = data.vacation_hours * (data.hourly_rate || 0)
+        drawText(`Vacation Pay (${data.vacation_hours} hrs)`, earningsX, earningsY, "12px 'Times New Roman'", "#1f2937")
+        drawText(formatCurrency(vacationPay), earningsX + columnWidth - 50, earningsY, "12px 'Times New Roman'", "#1f2937", "right")
         earningsY += 22
       }
     } else {
@@ -226,14 +287,14 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
       drawText(formatCurrency(data.salary || 0), earningsX + columnWidth - 50, earningsY, "12px 'Times New Roman'", "#1f2937", "right")
       earningsY += 22
     }
-    
+
     // Additional earnings
     if (data.bonus && data.bonus > 0) {
       drawText("Bonus", earningsX, earningsY, "12px 'Times New Roman'", "#1f2937")
       drawText(formatCurrency(data.bonus), earningsX + columnWidth - 50, earningsY, "12px 'Times New Roman'", "#1f2937", "right")
       earningsY += 22
     }
-    
+
     if (data.commission && data.commission > 0) {
       drawText("Commission", earningsX, earningsY, "12px 'Times New Roman'", "#1f2937")
       drawText(formatCurrency(data.commission), earningsX + columnWidth - 50, earningsY, "12px 'Times New Roman'", "#1f2937", "right")
@@ -248,7 +309,7 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     drawText(formatCurrency(data.gross_pay), earningsX + columnWidth - 50, earningsY, "bold 13px 'Times New Roman'", "#1f2937", "right")
     
     // Deductions column
-    drawText("DEDUCTIONS", deductionsX, y, "bold 13px 'Times New Roman'", "#14b8a6")
+    drawText("DEDUCTIONS", deductionsX, y, "bold 13px 'Times New Roman'", "#239BA0")
     drawLine(deductionsX, y + 8, deductionsX + columnWidth - 50, y + 8, "#cbd5e1", 1)
     
     let deductionsY = y + 30
@@ -258,9 +319,16 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
       { label: "State Tax", amount: data.state_tax },
       { label: "Social Security", amount: data.social_security },
       { label: "Medicare", amount: data.medicare },
+      { label: "State Disability", amount: data.state_disability },
       { label: "Health Insurance", amount: data.health_insurance },
       { label: "Dental Insurance", amount: data.dental_insurance },
+      { label: "Vision Insurance", amount: data.vision_insurance },
+      { label: "Life Insurance", amount: data.life_insurance },
       { label: "401(k)", amount: data.retirement_401k },
+      { label: "Roth IRA", amount: data.roth_ira },
+      { label: "HSA", amount: data.hsa },
+      { label: "Parking Fee", amount: data.parking_fee },
+      { label: "Union Dues", amount: data.union_dues },
       { label: "Other Deductions", amount: data.other_deductions },
     ]
     
@@ -287,9 +355,9 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     drawLine(margin + 30, y, canvasWidth - margin - 30, y, "#d1d5db", 2)
     y += 30
     
-    // Net Pay section with teal background (full width)
+    // Net Pay section with custom teal background (full width)
     const netPayHeight = 60
-    drawRect(margin + 30, y, contentWidth - 60, netPayHeight, "#14b8a6")
+    drawRect(margin + 30, y, contentWidth - 60, netPayHeight, "#239BA0")
     
     // Net pay text (white on teal)
     drawText("NET PAY", margin + 50, y + netPayHeight / 2, "bold 20px 'Times New Roman'", "#ffffff")
