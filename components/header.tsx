@@ -3,20 +3,13 @@
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Menu, X } from "lucide-react"
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu"
+import { Menu, X, ChevronDown } from "lucide-react"
 
 export function Header() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [taxDropdownOpen, setTaxDropdownOpen] = useState(false)
 
   useEffect(() => {
     // Check localStorage for mock user session
@@ -46,96 +39,94 @@ export function Header() {
           </div>
 
           <nav className="hidden lg:block">
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <Link
-                    href="/create-paystub"
-                    className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
-                  >
-                    Paystubs
-                  </Link>
-                </NavigationMenuItem>
+            <div className="flex items-center space-x-1">
+              <Link
+                href="/create-paystub"
+                className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
+              >
+                Paystubs
+              </Link>
 
-                <NavigationMenuItem>
-                  <Link
-                    href="/create-w2"
-                    className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
-                  >
-                    W2 Form
-                  </Link>
-                </NavigationMenuItem>
+              <Link
+                href="/contact"
+                className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
+              >
+                W2 Form
+              </Link>
 
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="text-foreground hover:text-primary">
-                    Tax Return
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                      <li className="row-span-3">
-                        <NavigationMenuLink asChild>
-                          <Link
-                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md text-foreground"
-                            href="/create-tax-return"
-                          >
-                            <div className="mb-2 mt-4 text-lg font-medium">
-                              Tax Returns
-                            </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                              File your taxes accurately and efficiently with our professional tax return services.
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link
-                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-foreground"
-                            href="/create-tax-return/individual"
-                          >
-                            <div className="text-sm font-medium leading-none">Individual Tax Return</div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Personal income tax filing for individuals
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link
-                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground text-foreground"
-                            href="/create-tax-return/business"
-                          >
-                            <div className="text-sm font-medium leading-none">Business Tax Return</div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Tax services for small businesses and entrepreneurs
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-
-                <NavigationMenuItem>
-                  <Link
-                    href="/create-1099"
-                    className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
+              {/* Custom Tax Return Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setTaxDropdownOpen(!taxDropdownOpen)}
+                  onMouseEnter={() => setTaxDropdownOpen(true)}
+                  onMouseLeave={() => setTaxDropdownOpen(false)}
+                  className="flex items-center text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
+                >
+                  Tax Return
+                  <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${taxDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {taxDropdownOpen && (
+                  <div 
+                    className="absolute top-full left-0 mt-1 w-[600px] bg-white border rounded-md shadow-lg z-50"
+                    onMouseEnter={() => setTaxDropdownOpen(true)}
+                    onMouseLeave={() => setTaxDropdownOpen(false)}
                   >
-                    1099 Misc Form
-                  </Link>
-                </NavigationMenuItem>
+                    <div className="grid grid-cols-2 gap-3 p-4">
+                      <div className="row-span-3">
+                        <Link
+                          href="/contact"
+                          className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none hover:shadow-md text-foreground transition-all"
+                        >
+                          <div className="mb-2 mt-4 text-lg font-medium">
+                            Tax Returns
+                          </div>
+                          <p className="text-sm leading-tight text-muted-foreground">
+                            File your taxes accurately and efficiently with our professional tax return services.
+                          </p>
+                        </Link>
+                      </div>
+                      <div>
+                        <Link
+                          href="/contact"
+                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground text-foreground"
+                        >
+                          <div className="text-sm font-medium leading-none">Individual Tax Return</div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            Personal income tax filing for individuals
+                          </p>
+                        </Link>
+                      </div>
+                      <div>
+                        <Link
+                          href="/contact"
+                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground text-foreground"
+                        >
+                          <div className="text-sm font-medium leading-none">Business Tax Return</div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            Tax services for small businesses and entrepreneurs
+                          </p>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
 
-                <NavigationMenuItem>
-                  <Link
-                    href="/blogs"
-                    className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
-                  >
-                    Blogs
-                  </Link>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+              <Link
+                href="/contact"
+                className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
+              >
+                1099 Misc Form
+              </Link>
+
+              <Link
+                href="/blogs"
+                className="text-foreground hover:text-primary px-4 py-2 text-sm font-medium rounded-md hover:bg-muted/50 transition-colors"
+              >
+                Blogs
+              </Link>
+            </div>
           </nav>
 
           <div className="flex items-center space-x-3">
