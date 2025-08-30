@@ -15,7 +15,53 @@ interface PaystubFormProps {
 
 export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
   const handleInputChange = (field: keyof PaystubData, value: string | number | boolean) => {
-    onUpdate({ [field]: value })
+    const updates: Partial<PaystubData> = { [field]: value }
+    
+    // Trigger recalculation when key fields change
+    if (field === 'hourlyRate' || field === 'hoursWorked' || field === 'overtimeRate' || field === 'overtimeHours' || 
+        field === 'medicare' || field === 'socialSecurity' || field === 'federalTax' || field === 'stateTax') {
+      
+      // Calculate with the new value
+      const newData = { ...data, [field]: value }
+      
+      // Calculate gross pay
+      if (newData.payType === "hourly") {
+        const regularPay = (newData.hourlyRate || 0) * (newData.hoursWorked || 0)
+        const overtimePay = (newData.overtimeRate || 0) * (newData.overtimeHours || 0)
+        updates.grossPay = regularPay + overtimePay
+      } else {
+        updates.grossPay = newData.salary || 0
+      }
+      
+      // Calculate total deductions
+      updates.totalDeductions = (newData.medicare || 0) + (newData.socialSecurity || 0) + (newData.federalTax || 0) + (newData.stateTax || 0)
+      
+      // Calculate net pay
+      updates.netPay = (updates.grossPay || 0) - (updates.totalDeductions || 0)
+    }
+    
+    onUpdate(updates)
+  }
+
+  // Calculate gross pay for current period (for display only)
+  const calculateGrossPay = () => {
+    if (data.payType === "hourly") {
+      const regularPay = (data.hourlyRate || 0) * (data.hoursWorked || 0)
+      const overtimePay = (data.overtimeRate || 0) * (data.overtimeHours || 0)
+      return regularPay + overtimePay
+    } else {
+      return data.salary || 0
+    }
+  }
+
+  // Calculate total deductions for current period (for display only)
+  const calculateTotalDeductions = () => {
+    return (data.medicare || 0) + (data.socialSecurity || 0) + (data.federalTax || 0) + (data.stateTax || 0)
+  }
+
+  // Calculate net pay for current period (for display only)
+  const calculateNetPay = () => {
+    return calculateGrossPay() - calculateTotalDeductions()
   }
 
   return (
@@ -739,14 +785,14 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium border-r border-gray-200">
-                      {(data.hourlyRate * data.hoursWorked).toFixed(2)}
+                      {((data.hourlyRate || 0) * (data.hoursWorked || 0)).toFixed(2)}
                     </td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
                         type="number"
                         step="0.01"
-                        value={data.ytdGrossPay - data.grossPay}
-                        onChange={(e) => handleInputChange("ytdGrossPay", (Number.parseFloat(e.target.value) || 0) + data.grossPay)}
+                        value={data.ytdGrossPay - calculateGrossPay()}
+                        onChange={(e) => handleInputChange("ytdGrossPay", (Number.parseFloat(e.target.value) || 0) + calculateGrossPay())}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
                         placeholder="27,200.00"
                       />
@@ -778,7 +824,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium border-r border-gray-200">
-                      {(data.overtimeRate * data.overtimeHours).toFixed(2)}
+                      {((data.overtimeRate || 0) * (data.overtimeHours || 0)).toFixed(2)}
                     </td>
                     <td className="p-4 text-center text-sm border-r border-gray-200">0.00</td>
                     <td className="p-4 text-center text-sm">0.00</td>
@@ -795,9 +841,9 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-sm font-semibold text-gray-700 border-r border-gray-200"></td>
                     <td className="p-4 border-r border-gray-200"></td>
                     <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">GROSS PAY</td>
-                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{data.grossPay.toFixed(2)}</td>
-                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{(data.ytdGrossPay - data.grossPay).toFixed(2)}</td>
-                    <td className="p-4 text-center text-sm font-semibold text-gray-700">{data.ytdGrossPay.toFixed(2)}</td>
+                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{calculateGrossPay().toFixed(2)}</td>
+                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{(data.ytdGrossPay - calculateGrossPay()).toFixed(2)}</td>
+                    <td className="p-4 text-center text-sm font-semibold text-gray-700">{(calculateGrossPay() + (data.ytdGrossPay - calculateGrossPay())).toFixed(2)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -831,8 +877,8 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                       <Input
                         type="number"
                         step="0.01"
-                        value={data.ytdMedicare - data.medicare}
-                        onChange={(e) => handleInputChange("ytdMedicare", (Number.parseFloat(e.target.value) || 0) + data.medicare)}
+                        value={data.ytdMedicare - (data.medicare || 0)}
+                        onChange={(e) => handleInputChange("ytdMedicare", (Number.parseFloat(e.target.value) || 0) + (data.medicare || 0))}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
                         placeholder="394.40"
                       />
@@ -857,8 +903,8 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                       <Input
                         type="number"
                         step="0.01"
-                        value={data.ytdSocialSecurity - data.socialSecurity}
-                        onChange={(e) => handleInputChange("ytdSocialSecurity", (Number.parseFloat(e.target.value) || 0) + data.socialSecurity)}
+                        value={data.ytdSocialSecurity - (data.socialSecurity || 0)}
+                        onChange={(e) => handleInputChange("ytdSocialSecurity", (Number.parseFloat(e.target.value) || 0) + (data.socialSecurity || 0))}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
                         placeholder="1,686.40"
                       />
@@ -883,8 +929,8 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                       <Input
                         type="number"
                         step="0.01"
-                        value={data.ytdFederalTax - data.federalTax}
-                        onChange={(e) => handleInputChange("ytdFederalTax", (Number.parseFloat(e.target.value) || 0) + data.federalTax)}
+                        value={data.ytdFederalTax - (data.federalTax || 0)}
+                        onChange={(e) => handleInputChange("ytdFederalTax", (Number.parseFloat(e.target.value) || 0) + (data.federalTax || 0))}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
                         placeholder="1,931.20"
                       />
@@ -909,8 +955,8 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                       <Input
                         type="number"
                         step="0.01"
-                        value={data.ytdStateTax - data.stateTax}
-                        onChange={(e) => handleInputChange("ytdStateTax", (Number.parseFloat(e.target.value) || 0) + data.stateTax)}
+                        value={data.ytdStateTax - (data.stateTax || 0)}
+                        onChange={(e) => handleInputChange("ytdStateTax", (Number.parseFloat(e.target.value) || 0) + (data.stateTax || 0))}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
                         placeholder="0.00"
                       />
@@ -927,15 +973,15 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                   </tr>
                   <tr className="bg-gray-50">
                     <td className="p-4 text-sm font-semibold text-gray-700 border-r border-gray-200">Deduction Total</td>
-                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{data.totalDeductions.toFixed(2)}</td>
-                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{(data.ytdTotalDeductions - data.totalDeductions).toFixed(2)}</td>
-                    <td className="p-4 text-center text-sm font-semibold text-gray-700">{data.ytdTotalDeductions.toFixed(2)}</td>
+                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{calculateTotalDeductions().toFixed(2)}</td>
+                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{(data.ytdTotalDeductions - calculateTotalDeductions()).toFixed(2)}</td>
+                    <td className="p-4 text-center text-sm font-semibold text-gray-700">{(calculateTotalDeductions() + (data.ytdTotalDeductions - calculateTotalDeductions())).toFixed(2)}</td>
                   </tr>
                   <tr className="bg-gray-100">
                     <td className="p-4 text-sm font-bold text-gray-700 border-r border-gray-200">Net Pay</td>
-                    <td className="p-4 text-center text-sm font-bold text-gray-700 border-r border-gray-200">{data.netPay.toFixed(2)}</td>
-                    <td className="p-4 text-center text-sm font-bold text-gray-700 border-r border-gray-200">{(data.ytdNetPay - data.netPay).toFixed(2)}</td>
-                    <td className="p-4 text-center text-sm font-bold text-gray-700">{data.ytdNetPay.toFixed(2)}</td>
+                    <td className="p-4 text-center text-sm font-bold text-gray-700 border-r border-gray-200">{calculateNetPay().toFixed(2)}</td>
+                    <td className="p-4 text-center text-sm font-bold text-gray-700 border-r border-gray-200">{(data.ytdNetPay - calculateNetPay()).toFixed(2)}</td>
+                    <td className="p-4 text-center text-sm font-bold text-gray-700">{(calculateNetPay() + (data.ytdNetPay - calculateNetPay())).toFixed(2)}</td>
                   </tr>
                 </tbody>
               </table>

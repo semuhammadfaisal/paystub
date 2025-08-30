@@ -110,6 +110,24 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
                     <span>{formatCurrency(data.overtimeHours * (data.overtimeRate || data.hourlyRate * 1.5))}</span>
                   </div>
                 )}
+                {data.holidayHours > 0 && (
+                  <div className="flex justify-between">
+                    <span>Holiday Pay ({data.holidayHours} hrs)</span>
+                    <span>{formatCurrency(data.holidayHours * data.hourlyRate)}</span>
+                  </div>
+                )}
+                {data.sickHours > 0 && (
+                  <div className="flex justify-between">
+                    <span>Sick Pay ({data.sickHours} hrs)</span>
+                    <span>{formatCurrency(data.sickHours * data.hourlyRate)}</span>
+                  </div>
+                )}
+                {data.vacationHours > 0 && (
+                  <div className="flex justify-between">
+                    <span>Vacation Pay ({data.vacationHours} hrs)</span>
+                    <span>{formatCurrency(data.vacationHours * data.hourlyRate)}</span>
+                  </div>
+                )}
               </>
             ) : (
               <div className="flex justify-between">

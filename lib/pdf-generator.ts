@@ -1,4 +1,5 @@
 "use client"
+import { jsPDF } from "jspdf"
 
 export interface PaystubData {
   // Basic employee and employer info
@@ -145,7 +146,7 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
       ctx.restore()
     }
 
-    const margin = 40
+    const margin = 48
     const contentWidth = canvasWidth - margin * 2
     let y = margin
 
@@ -156,12 +157,15 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
 
     // Header section
     // Company name and title
-    drawText("PAYROLL STATEMENT", margin + 30, y, "bold 20px 'Times New Roman'", "#1f2937")
-    drawText(data.employer_name || "Company Name", margin + 30, y + 28, "bold 16px 'Times New Roman'", "#1f2937")
+    drawText("PAYROLL STATEMENT", margin + 30, y, "bold 24px 'Times New Roman'", "#1f2937")
+    drawText(data.employer_name || "Company Name", margin + 30, y + 32, "bold 18px 'Times New Roman'", "#1f2937")
     
-    // Company address and EIN
-    drawText(data.employer_address || "Company Address", margin + 30, y + 50, "12px 'Times New Roman'", "#4b5563")
-    drawText(`EIN: ${data.employer_ein || "XX-XXXXXXX"}`, margin + 30, y + 70, "12px 'Times New Roman'", "#4b5563")
+    // Company address, phone, and EIN
+    drawText(data.employer_address || "Company Address", margin + 30, y + 56, "12px 'Times New Roman'", "#4b5563")
+    if (data.employer_phone) {
+      drawText(`Phone: ${data.employer_phone}`, margin + 30, y + 70, "12px 'Times New Roman'", "#4b5563")
+    }
+    drawText(`EIN: ${data.employer_ein || "XX-XXXXXXX"}`, margin + 30, y + (data.employer_phone ? 90 : 70), "12px 'Times New Roman'", "#4b5563")
 
     // Paystub box (custom teal background)
     const payStubBoxWidth = 120
@@ -174,8 +178,9 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     drawText(`Pay Date: ${formatDate(data.pay_date)}`, canvasWidth - margin - 30, y + 45, "11px 'Times New Roman'", "#4b5563", "right")
     drawText(`Pay Period: ${formatDate(data.pay_period_start)} - ${formatDate(data.pay_period_end)}`, canvasWidth - margin - 30, y + 65, "11px 'Times New Roman'", "#4b5563", "right")
 
-    // Header separator line
-    y += 90
+    // Header separator line – add extra space if employer phone is printed
+    const headerHeight = data.employer_phone ? 110 : 90
+    y += headerHeight
     drawLine(margin + 30, y, canvasWidth - margin - 30, y, "#d1d5db", 2)
     y += 30
 
@@ -211,7 +216,7 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     drawText(`Pay Frequency: ${data.pay_frequency || "Bi-Weekly"}`, rightColumnX, rightY, "12px 'Times New Roman'", "#1f2937")
     rightY += 20
     
-    if (data.hourly_rate) {
+    if (data.pay_type === "hourly") {
       drawText(`Pay Type: Hourly`, rightColumnX, rightY, "12px 'Times New Roman'", "#1f2937")
       rightY += 20
       drawText(`Hourly Rate: ${formatCurrency(data.hourly_rate)}`, rightColumnX, rightY, "12px 'Times New Roman'", "#1f2937")
@@ -246,7 +251,7 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     
     let earningsY = y + 30
     
-    if (data.hourly_rate) {
+    if (data.pay_type === "hourly") {
       // Hourly earnings breakdown
       const regularPay = (data.hours_worked || 0) * (data.hourly_rate || 0)
       drawText(`Regular Pay (${data.hours_worked || 0} hrs)`, earningsX, earningsY, "12px 'Times New Roman'", "#1f2937")
@@ -347,9 +352,37 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     drawText("TOTAL DEDUCTIONS", deductionsX, deductionsY, "bold 13px 'Times New Roman'", "#1f2937")
     drawText(formatCurrency(data.total_deductions), deductionsX + columnWidth - 50, deductionsY, "bold 13px 'Times New Roman'", "#1f2937", "right")
     
-    // Find the higher Y position for net pay section
+    // Find the higher Y position
     const maxY = Math.max(earningsY, deductionsY)
-    y = maxY + 60
+    y = maxY + 30
+
+    // YTD Summary
+    drawText("YEAR-TO-DATE", margin + 30, y, "bold 13px 'Times New Roman'", "#239BA0")
+    y += 20
+    const ytdLabelX = margin + 30
+    const ytdValueX = ytdLabelX + 220
+    drawText("YTD Gross Pay", ytdLabelX, y, "12px 'Times New Roman'", "#1f2937")
+    drawText(formatCurrency(data.ytd_gross_pay || 0), ytdValueX, y, "12px 'Times New Roman'", "#1f2937")
+    y += 18
+    drawText("YTD Federal Tax", ytdLabelX, y, "12px 'Times New Roman'", "#1f2937")
+    drawText(formatCurrency(data.ytd_federal_tax || 0), ytdValueX, y, "12px 'Times New Roman'", "#1f2937")
+    y += 18
+    drawText("YTD State Tax", ytdLabelX, y, "12px 'Times New Roman'", "#1f2937")
+    drawText(formatCurrency(data.ytd_state_tax || 0), ytdValueX, y, "12px 'Times New Roman'", "#1f2937")
+    y += 18
+    drawText("YTD Social Security", ytdLabelX, y, "12px 'Times New Roman'", "#1f2937")
+    drawText(formatCurrency(data.ytd_social_security || 0), ytdValueX, y, "12px 'Times New Roman'", "#1f2937")
+    y += 18
+    drawText("YTD Medicare", ytdLabelX, y, "12px 'Times New Roman'", "#1f2937")
+    drawText(formatCurrency(data.ytd_medicare || 0), ytdValueX, y, "12px 'Times New Roman'", "#1f2937")
+    y += 18
+    drawText("YTD Total Deductions", ytdLabelX, y, "12px 'Times New Roman'", "#1f2937")
+    drawText(formatCurrency(data.ytd_total_deductions || 0), ytdValueX, y, "12px 'Times New Roman'", "#1f2937")
+    y += 18
+    drawText("YTD Net Pay", ytdLabelX, y, "bold 12px 'Times New Roman'", "#1f2937")
+    drawText(formatCurrency(data.ytd_net_pay || 0), ytdValueX, y, "bold 12px 'Times New Roman'", "#1f2937")
+
+    y += 30
 
     // Section separator before net pay
     drawLine(margin + 30, y, canvasWidth - margin - 30, y, "#d1d5db", 2)
@@ -372,10 +405,26 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     drawText("This is a computer-generated payroll statement and does not require a signature.", canvasWidth / 2, y, "10px 'Times New Roman'", "#6b7280", "center")
     drawText("Please retain this statement for your records.", canvasWidth / 2, y + 20, "10px 'Times New Roman'", "#6b7280", "center")
 
-    // Convert canvas to blob with higher quality
-    canvas.toBlob((blob) => {
-      resolve(blob!)
-    }, "image/png", 1.0)
+    // Render to image then embed into a real PDF
+    const imgData = canvas.toDataURL("image/png", 1.0)
+    const pdf = new jsPDF({ unit: "pt", format: "letter", compress: true })
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+
+    // Fit image to page while preserving aspect ratio (leave uniform margins)
+    const safeXMargin = 24
+    const safeYMargin = 24
+    const usableWidth = pageWidth - safeXMargin * 2
+    const usableHeight = pageHeight - safeYMargin * 2
+    const imgRatio = Math.min(usableWidth / canvasWidth, usableHeight / canvasHeight)
+    const imgWidth = canvasWidth * imgRatio
+    const imgHeight = canvasHeight * imgRatio
+    const offsetX = (pageWidth - imgWidth) / 2
+    const offsetY = (pageHeight - imgHeight) / 2
+
+    pdf.addImage(imgData, "PNG", offsetX, offsetY, imgWidth, imgHeight)
+    const pdfBlob = pdf.output("blob") as Blob
+    resolve(pdfBlob)
   })
 }
 

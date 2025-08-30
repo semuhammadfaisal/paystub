@@ -266,40 +266,37 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
         updated.payDate = toISO(pay)
       }
 
+      // Calculate gross pay
       if (updated.payType === "hourly") {
-        // Prefer hourlyRate/hoursWorked if provided; fall back to regularRate/regularHours
-        const baseRate = typeof updated.hourlyRate === "number" ? updated.hourlyRate : updated.regularRate
-        const baseHours = typeof updated.hoursWorked === "number" ? updated.hoursWorked : updated.regularHours
-        const regularPay = baseRate * baseHours
-        const overtimeRate = updated.overtimeRate || baseRate * 1.5
-        const overtimePay = (updated.overtimeHours || 0) * overtimeRate
-        const holidayPay = (updated.holidayHours || 0) * baseRate
-        const sickPay = (updated.sickHours || 0) * baseRate
-        const vacationPay = (updated.vacationHours || 0) * baseRate
+        const regularPay = (updated.hourlyRate || 0) * (updated.hoursWorked || 0)
+        const overtimePay = (updated.overtimeRate || 0) * (updated.overtimeHours || 0)
+        const holidayPay = (updated.holidayHours || 0) * (updated.hourlyRate || 0)
+        const sickPay = (updated.sickHours || 0) * (updated.hourlyRate || 0)
+        const vacationPay = (updated.vacationHours || 0) * (updated.hourlyRate || 0)
         updated.grossPay =
-          regularPay + overtimePay + holidayPay + sickPay + vacationPay + updated.bonusAmount + updated.commissionAmount
+          regularPay + overtimePay + holidayPay + sickPay + vacationPay + (updated.bonusAmount || 0) + (updated.commissionAmount || 0)
       } else {
         // Salary-based gross pay
-        updated.grossPay = (updated.salary || 0) + updated.bonusAmount + updated.commissionAmount
+        updated.grossPay = (updated.salary || 0) + (updated.bonusAmount || 0) + (updated.commissionAmount || 0)
       }
 
       // Calculate total deductions
       updated.totalDeductions =
-        updated.federalTax +
-        updated.stateTax +
-        updated.socialSecurity +
-        updated.medicare +
-        updated.stateDisability +
-        updated.healthInsurance +
-        updated.dentalInsurance +
-        updated.visionInsurance +
-        updated.lifeInsurance +
-        updated.retirement401k +
-        updated.rothIRA +
-        updated.hsa +
-        updated.parkingFee +
-        updated.unionDues +
-        updated.otherDeductions
+        (updated.federalTax || 0) +
+        (updated.stateTax || 0) +
+        (updated.socialSecurity || 0) +
+        (updated.medicare || 0) +
+        (updated.stateDisability || 0) +
+        (updated.healthInsurance || 0) +
+        (updated.dentalInsurance || 0) +
+        (updated.visionInsurance || 0) +
+        (updated.lifeInsurance || 0) +
+        (updated.retirement401k || 0) +
+        (updated.rothIRA || 0) +
+        (updated.hsa || 0) +
+        (updated.parkingFee || 0) +
+        (updated.unionDues || 0) +
+        (updated.otherDeductions || 0)
 
       // Calculate net pay
       updated.netPay = updated.grossPay - updated.totalDeductions
@@ -467,7 +464,7 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
       }
 
       const pdfBlob = await generatePaystubPDF(pdfData)
-      const filename = `paystub-${paystubData.employeeName.replace(/\s+/g, "-")}-${paystubData.payDate || "draft"}.png`
+      const filename = `paystub-${paystubData.employeeName.replace(/\s+/g, "-")}-${paystubData.payDate || "draft"}.pdf`
       downloadPDF(pdfBlob, filename)
     } catch (error) {
       console.error("Download error:", error)

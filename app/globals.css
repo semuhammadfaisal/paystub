@@ -17,7 +17,7 @@
   --muted: oklch(0.97 0.01 240); /* #f0f4ff light blue background */
   --muted-foreground: oklch(0.2 0 0); /* #333333 */
   --accent: #239BA0; /* custom teal accent for highlights */
-  --accent-foreground: #239BA0; /* custom teal text on accent */
+  --accent-foreground: #ffffff; /* white text on accent for contrast */
   --destructive: oklch(0.6 0.2 25); /* #ff4d4d red for errors */
   --destructive-foreground: oklch(1 0 0); /* #ffffff */
   --border: oklch(0.9 0 0); /* #e0e0e0 light gray borders */
