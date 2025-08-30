@@ -32,11 +32,7 @@ export function HeroSection() {
             </p>
 
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
-              <Link href="/signup">
-                <Button size="lg" className="px-6">
-                  Get Started
-                </Button>
-              </Link>
+            
               <Link href="/create-paystub" className="sm:ml-1">
                 <Button size="lg" variant="outline" className="px-6 hover:bg-primary/10">
                   Generate a Paystub

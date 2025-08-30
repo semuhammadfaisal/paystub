@@ -11,21 +11,27 @@ export function DocumentTypes() {
     {
       title: "W-2",
       image: "/w2.jpg",
-      href: "/create-w2",
-      cta: "Create your W-2",
+      href: "/contact",
+      cta: "Order your W-2",
+    },
+    {
+      title: "Tax Return",
+      image: "/1099.jpg",
+      href: "/contact",
+      cta: "Order your Tax Return",
     },
     {
       title: "1099-MISC",
       image: "/1099.jpg",
-      href: "/create-1099",
-      cta: "Create your 1099-MISC",
+      href: "/contact",
+      cta: "Order your 1099-MISC",
     },
   ]
 
   return (
     <section id="documents" className="bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 divide-y md:divide-y-0 md:divide-x">
           {documents.map((doc, index) => (
             <div key={index} className="flex flex-col items-stretch">
               {/* Top Title */}

@@ -30,22 +30,22 @@ export function Footer() {
             <h4 className="font-bold text-gray-900 mb-6 tracking-tight">Services</h4>
             <ul className="space-y-3 text-sm text-gray-600 font-light">
               <li>
-                <a href="#" className="hover:text-[#239BA0] transition-colors duration-200">
+                <a href="/create-paystub" className="hover:text-[#239BA0] transition-colors duration-200">
                   Paystubs
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-[#239BA0] transition-colors duration-200">
+                <a href="/contact" className="hover:text-[#239BA0] transition-colors duration-200">
                   W2 Forms
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-[#239BA0] transition-colors duration-200">
+                <a href="/contact" className="hover:text-[#239BA0] transition-colors duration-200">
                   Tax Returns
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-[#239BA0] transition-colors duration-200">
+                <a href="/contact" className="hover:text-[#239BA0] transition-colors duration-200">
                   1099 Forms
                 </a>
               </li>
@@ -56,7 +56,7 @@ export function Footer() {
             <h4 className="font-bold text-gray-900 mb-6 tracking-tight">Support</h4>
             <ul className="space-y-3 text-sm text-gray-600 font-light">
               <li>
-                <a href="#" className="hover:text-[#239BA0] transition-colors duration-200">
+                <a href="/contact" className="hover:text-[#239BA0] transition-colors duration-200">
                   Contact Us
                 </a>
               </li>
@@ -71,7 +71,7 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-[#239BA0] transition-colors duration-200">
+                <a href="/contact" className="hover:text-[#239BA0] transition-colors duration-200">
                   Live Chat
                 </a>
               </li>
