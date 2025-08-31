@@ -22,7 +22,11 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
   }
 
   const getDisplay = (key: string, fallback: string) => {
-    return Object.prototype.hasOwnProperty.call(displayValues, key) ? displayValues[key] : fallback
+    if (Object.prototype.hasOwnProperty.call(displayValues, key)) {
+      return displayValues[key]
+    }
+    // If fallback is a number string that equals '0', return empty string
+    return fallback === '0' ? '' : fallback
   }
 
   const toNumber = (v: string) => (v.trim() === "" ? 0 : Number.parseFloat(v))
@@ -160,7 +164,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                 value={data.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
                 className="border border-gray-300 rounded px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary"
-                placeholder=""
+                placeholder="email@example.com"
               />
             </div>
           </div>
@@ -297,7 +301,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                   id="companyName"
                   value={data.companyName}
                   onChange={(e) => handleInputChange("companyName", e.target.value)}
-                  placeholder="Employer (Company) Name *"
+                  placeholder="Employer (Company) Name"
                   className="border border-gray-300 rounded px-3 py-2 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 placeholder:text-gray-400"
                   required
                 />
@@ -318,7 +322,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                   id="companyAddress"
                   value={data.companyAddress}
                   onChange={(e) => handleInputChange("companyAddress", e.target.value)}
-                  placeholder="Street Address 1 *"
+                  placeholder="Street Address 1"
                   className="border border-gray-300 rounded px-3 py-2 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 placeholder:text-gray-400"
                 />
               </div>
@@ -340,7 +344,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                   id="companyCity"
                   value={data.companyCity}
                   onChange={(e) => handleInputChange("companyCity", e.target.value)}
-                  placeholder="City *"
+                  placeholder="City"
                   className="border border-gray-300 rounded px-3 py-2 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 placeholder:text-gray-400"
                 />
               </div>
@@ -410,7 +414,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                   id="companyZip"
                   value={data.companyZip}
                   onChange={(e) => handleInputChange("companyZip", e.target.value)}
-                  placeholder="Zip code *"
+                  placeholder="Zip code"
                   className="border border-gray-300 rounded px-3 py-2 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 placeholder:text-gray-400"
                 />
               </div>
@@ -504,7 +508,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                   id="employeeCity"
                   value={data.employeeCity}
                   onChange={(e) => handleInputChange("employeeCity", e.target.value)}
-                  placeholder="City *"
+                  placeholder="City"
                   className="border border-gray-300 rounded px-3 py-2 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 placeholder:text-gray-400"
                 />
               </div>
@@ -574,7 +578,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                   id="employeeZip"
                   value={data.employeeZip}
                   onChange={(e) => handleInputChange("employeeZip", e.target.value)}
-                  placeholder="Zip code *"
+                  placeholder="Zip code"
                   className="border border-gray-300 rounded px-3 py-2 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 placeholder:text-gray-400"
                 />
               </div>
@@ -588,7 +592,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                   onValueChange={(value) => handleInputChange("exemptions", parseInt(value))}
                 >
                   <SelectTrigger className="border border-gray-300 rounded px-3 py-2 focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
-                    <SelectValue placeholder="0" />
+                    <SelectValue placeholder="" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="0">0</SelectItem>
@@ -675,7 +679,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
             }}
           >
             <SelectTrigger className="bg-primary border-none text-primary-foreground hover:bg-primary/90 focus:ring-0 focus:ring-offset-0">
-              <SelectValue placeholder="PAYSTUB #1 - Pay period: 08/17/2025 to 08/30/2025" />
+              <SelectValue placeholder="" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="paystub1">PAYSTUB #1 - Pay period: 08/17/2025 to 08/30/2025</SelectItem>
@@ -701,7 +705,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                 onValueChange={(value) => handleInputChange("numberOfPaystubs", parseInt(value))}
               >
                 <SelectTrigger className="w-48 border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent">
-                  <SelectValue placeholder="Pay period #18" />
+                  <SelectValue placeholder="" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="1">Pay period #1</SelectItem>
@@ -786,7 +790,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                           handleInputChange("hourlyRate", toNumber(v))
                         }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="20.00"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 border-r border-gray-200">
@@ -799,11 +803,14 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                           handleInputChange("hoursWorked", toNumber(v))
                         }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="80"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium border-r border-gray-200">
-                      {((data.hourlyRate || 0) * (data.hoursWorked || 0)).toFixed(2)}
+                      {(() => {
+                        const result = (data.hourlyRate || 0) * (data.hoursWorked || 0);
+                        return result ? result.toFixed(2) : '';
+                      })()}
                     </td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
@@ -815,7 +822,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                           handleInputChange("ytdGrossPay", toNumber(v) + calculateGrossPay())
                         }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="27,200.00"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
@@ -834,7 +841,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                           handleInputChange("overtimeRate", toNumber(v))
                         }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="0.00"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 border-r border-gray-200">
@@ -847,11 +854,14 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                           handleInputChange("overtimeHours", toNumber(v))
                         }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="0"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium border-r border-gray-200">
-                      {((data.overtimeRate || 0) * (data.overtimeHours || 0)).toFixed(2)}
+                      {(() => {
+                        const result = (data.overtimeRate || 0) * (data.overtimeHours || 0);
+                        return result ? result.toFixed(2) : '';
+                      })()}
                     </td>
                     <td className="p-4 text-center text-sm border-r border-gray-200">
                       <Input
@@ -863,11 +873,14 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                           handleInputChange("ytdOvertimePay", toNumber(v) + ((data.overtimeRate || 0) * (data.overtimeHours || 0)))
                         }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="0.00"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
-                      {((data.ytdOvertimePay || 0) + ((data.overtimeRate || 0) * (data.overtimeHours || 0))).toFixed(2)}
+                      {(() => {
+                        const result = (data.ytdOvertimePay || 0) + ((data.overtimeRate || 0) * (data.overtimeHours || 0));
+                        return result ? result.toFixed(2) : '';
+                      })()}
                     </td>
                   </tr>
                  
@@ -875,9 +888,9 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-sm font-semibold text-gray-700 border-r border-gray-200"></td>
                     <td className="p-4 border-r border-gray-200"></td>
                     <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">GROSS PAY</td>
-                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{calculateGrossPay().toFixed(2)}</td>
-                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{(data.ytdGrossPay - calculateGrossPay()).toFixed(2)}</td>
-                    <td className="p-4 text-center text-sm font-semibold text-gray-700">{(calculateGrossPay() + (data.ytdGrossPay - calculateGrossPay())).toFixed(2)}</td>
+                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{calculateGrossPay() ? calculateGrossPay().toFixed(2) : ''}</td>
+                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{(data.ytdGrossPay - calculateGrossPay()) ? (data.ytdGrossPay - calculateGrossPay()).toFixed(2) : ''}</td>
+                    <td className="p-4 text-center text-sm font-semibold text-gray-700">{(calculateGrossPay() + (data.ytdGrossPay - calculateGrossPay())) ? (calculateGrossPay() + (data.ytdGrossPay - calculateGrossPay())).toFixed(2) : ''}</td>
                   </tr>
                 </tbody>
               </table>
@@ -907,7 +920,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                           handleInputChange("medicare", toNumber(v))
                         }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="23.20"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 border-r border-gray-200">
@@ -920,7 +933,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                           handleInputChange("ytdMedicare", toNumber(v) + (data.medicare || 0))
                         }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="394.40"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
@@ -939,7 +952,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                           handleInputChange("socialSecurity", toNumber(v))
                         }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="99.20"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 border-r border-gray-200">
@@ -952,7 +965,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                           handleInputChange("ytdSocialSecurity", toNumber(v) + (data.socialSecurity || 0))
                         }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="1,686.40"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
@@ -971,7 +984,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                           handleInputChange("federalTax", toNumber(v))
                         }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="113.60"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 border-r border-gray-200">
@@ -984,7 +997,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                           handleInputChange("ytdFederalTax", toNumber(v) + (data.federalTax || 0))
                         }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="1,931.20"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
@@ -1003,7 +1016,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                           handleInputChange("stateTax", toNumber(v))
                         }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="0.00"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 border-r border-gray-200">
@@ -1016,7 +1029,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                           handleInputChange("ytdStateTax", toNumber(v) + (data.stateTax || 0))
                         }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="0.00"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
@@ -1026,15 +1039,15 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                  
                   <tr className="bg-gray-50">
                     <td className="p-4 text-sm font-semibold text-gray-700 border-r border-gray-200">Deduction Total</td>
-                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{calculateTotalDeductions().toFixed(2)}</td>
-                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{(data.ytdTotalDeductions - calculateTotalDeductions()).toFixed(2)}</td>
-                    <td className="p-4 text-center text-sm font-semibold text-gray-700">{(calculateTotalDeductions() + (data.ytdTotalDeductions - calculateTotalDeductions())).toFixed(2)}</td>
+                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{calculateTotalDeductions() ? calculateTotalDeductions().toFixed(2) : ''}</td>
+                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{(data.ytdTotalDeductions - calculateTotalDeductions()) ? (data.ytdTotalDeductions - calculateTotalDeductions()).toFixed(2) : ''}</td>
+                    <td className="p-4 text-center text-sm font-semibold text-gray-700">{(calculateTotalDeductions() + (data.ytdTotalDeductions - calculateTotalDeductions())) ? (calculateTotalDeductions() + (data.ytdTotalDeductions - calculateTotalDeductions())).toFixed(2) : ''}</td>
                   </tr>
                   <tr className="bg-gray-100">
                     <td className="p-4 text-sm font-bold text-gray-700 border-r border-gray-200">Net Pay</td>
-                    <td className="p-4 text-center text-sm font-bold text-gray-700 border-r border-gray-200">{calculateNetPay().toFixed(2)}</td>
-                    <td className="p-4 text-center text-sm font-bold text-gray-700 border-r border-gray-200">{(data.ytdNetPay - calculateNetPay()).toFixed(2)}</td>
-                    <td className="p-4 text-center text-sm font-bold text-gray-700">{(calculateNetPay() + (data.ytdNetPay - calculateNetPay())).toFixed(2)}</td>
+                    <td className="p-4 text-center text-sm font-bold text-gray-700 border-r border-gray-200">{calculateNetPay() ? calculateNetPay().toFixed(2) : ''}</td>
+                    <td className="p-4 text-center text-sm font-bold text-gray-700 border-r border-gray-200">{(data.ytdNetPay - calculateNetPay()) ? (data.ytdNetPay - calculateNetPay()).toFixed(2) : ''}</td>
+                    <td className="p-4 text-center text-sm font-bold text-gray-700">{(calculateNetPay() + (data.ytdNetPay - calculateNetPay())) ? (calculateNetPay() + (data.ytdNetPay - calculateNetPay())).toFixed(2) : ''}</td>
                   </tr>
                 </tbody>
               </table>
