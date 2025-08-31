@@ -26,7 +26,7 @@ export function PageHeader() {
           className="bg-green-500 hover:bg-green-600 text-white border-0"
         >
           <MessageCircle className="h-4 w-4 mr-2" />
-          Contact for customized templates
+          Customized templates
         </Button>
       </div>
     </div>

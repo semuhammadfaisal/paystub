@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { PaystubForm } from "@/components/paystub-form-new"
 import { PaystubPreview } from "@/components/paystub-preview"
+import { LogoUpload } from "@/components/logo-upload"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Save, Download } from "lucide-react"
@@ -400,6 +401,13 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
 
     setIsDownloading(true)
     try {
+      console.log('Starting PDF generation...')
+      console.log('Logo data in component:', paystubData.companyLogo ? 'Present' : 'Not present')
+      if (paystubData.companyLogo) {
+        console.log('Logo data length:', paystubData.companyLogo.length)
+        console.log('Logo data preview:', paystubData.companyLogo.substring(0, 50))
+      }
+      
       const pdfData = {
         // Basic employee and employer info
         employee_name: paystubData.employeeName,
@@ -411,6 +419,7 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
         employer_address: `${paystubData.companyAddress}, ${paystubData.companyCity}, ${paystubData.companyState} ${paystubData.companyZip}`,
         employer_ein: paystubData.companyEIN,
         employer_phone: paystubData.companyPhone,
+        employer_logo: paystubData.companyLogo,
 
         // Pay period details
         pay_period_start: paystubData.payPeriodStart,
@@ -463,8 +472,10 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
         net_pay: paystubData.netPay,
       }
 
+      console.log('PDF data prepared, logo in PDF data:', pdfData.employer_logo ? 'Present' : 'Not present')
+      
       const pdfBlob = await generatePaystubPDF(pdfData)
-      const filename = `paystub-${paystubData.employeeName.replace(/\s+/g, "-")}-${paystubData.payDate || "draft"}.pdf`
+      const filename = `paystub-${paystubData.employeeName.replace(/\/+/g, "-")}-${paystubData.payDate || "draft"}.pdf`
       downloadPDF(pdfBlob, filename)
     } catch (error) {
       console.error("Download error:", error)
@@ -477,11 +488,20 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
   return (
     <div className="space-y-6">
       <div className="space-y-8">
+        <StepHeader step={1} title="Company Logo" />
+        
+        <div className="bg-white p-6 rounded-lg border">
+          <LogoUpload 
+            logo={paystubData.companyLogo} 
+            onLogoChange={(logo) => updatePaystubData({ companyLogo: logo })} 
+          />
+        </div>
+
         <div className="bg-white">
           <PaystubForm data={paystubData} onUpdate={updatePaystubData} />
         </div>
 
-        <StepHeader step={6} title="Review" />
+        <StepHeader step={7} title="Review" />
 
         <div className="bg-white">
           <PaystubPreview data={paystubData} />

@@ -29,16 +29,25 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
       {/* Header */}
       <div className="border-b-2 border-gray-800 pb-4 mb-4">
         <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-lg font-bold text-primary">PAYROLL STATEMENT</h1>
-            <div className="mt-2">
-              <div className="font-bold">{data.companyName || "Company Name"}</div>
-              <div>{data.companyAddress || "Company Address"}</div>
-              <div>
-                {data.companyCity || "City"}, {data.companyState || "ST"} {data.companyZip || "ZIP"}
+          <div className="flex items-start gap-4">
+            {data.companyLogo && (
+              <img 
+                src={data.companyLogo} 
+                alt="Company Logo" 
+                className="h-16 w-auto object-contain border border-gray-200 rounded"
+              />
+            )}
+            <div>
+              <h1 className="text-lg font-bold text-primary">PAYROLL STATEMENT</h1>
+              <div className="mt-2">
+                <div className="font-bold">{data.companyName || "Company Name"}</div>
+                <div>{data.companyAddress || "Company Address"}</div>
+                <div>
+                  {data.companyCity || "City"}, {data.companyState || "ST"} {data.companyZip || "ZIP"}
+                </div>
+                {data.companyPhone && <div>Phone: {data.companyPhone}</div>}
+                <div>EIN: {data.companyEIN || "XX-XXXXXXX"}</div>
               </div>
-              {data.companyPhone && <div>Phone: {data.companyPhone}</div>}
-              <div>EIN: {data.companyEIN || "XX-XXXXXXX"}</div>
             </div>
           </div>
           <div className="text-right">

@@ -12,6 +12,7 @@ export interface PaystubData {
   employer_address: string
   employer_ein: string
   employer_phone?: string
+  employer_logo?: string
 
   // Pay period details
   pay_period_start: string
@@ -63,7 +64,7 @@ export interface PaystubData {
 }
 
 export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
     const canvas = document.createElement("canvas")
     const ctx = canvas.getContext("2d")!
 
@@ -155,17 +156,69 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
 
     y += 30
 
-    // Header section
+    // Header section with logo and company info layout
+    const headerStartY = y
+    
+    // Company logo (if provided) - position first to get dimensions
+    let logoWidth = 0
+    let logoHeight = 0
+    if (data.employer_logo) {
+      console.log('Logo data present, length:', data.employer_logo.length)
+      console.log('Logo data starts with:', data.employer_logo.substring(0, 50))
+      
+      // Create image element to load the logo
+      const logoImg = new Image()
+      logoImg.crossOrigin = "anonymous"
+      
+      // Set up logo promise to handle async loading
+      const logoPromise = new Promise<void>((resolve) => {
+        logoImg.onload = () => {
+          console.log('Logo loaded successfully, dimensions:', logoImg.width, 'x', logoImg.height)
+          // Calculate logo dimensions (max 64px height to match preview)
+          const maxLogoHeight = 64
+          const logoAspectRatio = logoImg.width / logoImg.height
+          logoWidth = maxLogoHeight * logoAspectRatio
+          logoHeight = maxLogoHeight
+          
+          // Position logo at the very start of the left side (like preview)
+          const logoX = margin + 30
+          const logoY = headerStartY
+          
+          console.log('Drawing logo at:', logoX, logoY, 'size:', logoWidth, 'x', logoHeight)
+          // Draw logo image
+          ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight)
+          resolve()
+        }
+        
+        logoImg.onerror = () => {
+          // If logo fails to load, just continue without it
+          console.warn('Logo failed to load:', data.employer_logo?.substring(0, 50) + '...')
+          resolve()
+        }
+        
+        logoImg.src = data.employer_logo!
+      })
+      
+      // Wait for logo to load before continuing
+      await logoPromise
+      console.log('Logo promise resolved')
+    } else {
+      console.log('No logo data present')
+    }
+    
+    // Company info positioned next to logo (with gap)
+    const companyInfoX = margin + 30 + logoWidth + (logoWidth > 0 ? 20 : 0) // 20px gap if logo exists
+    
     // Company name and title
-    drawText("PAYROLL STATEMENT", margin + 30, y, "bold 24px 'Times New Roman'", "#1f2937")
-    drawText(data.employer_name || "Company Name", margin + 30, y + 32, "bold 18px 'Times New Roman'", "#1f2937")
+    drawText("PAYROLL STATEMENT", companyInfoX, y, "bold 24px 'Times New Roman'", "#1f2937")
+    drawText(data.employer_name || "Company Name", companyInfoX, y + 32, "bold 18px 'Times New Roman'", "#1f2937")
     
     // Company address, phone, and EIN
-    drawText(data.employer_address || "Company Address", margin + 30, y + 56, "12px 'Times New Roman'", "#4b5563")
+    drawText(data.employer_address || "Company Address", companyInfoX, y + 56, "12px 'Times New Roman'", "#4b5563")
     if (data.employer_phone) {
-      drawText(`Phone: ${data.employer_phone}`, margin + 30, y + 70, "12px 'Times New Roman'", "#4b5563")
+      drawText(`Phone: ${data.employer_phone}`, companyInfoX, y + 70, "12px 'Times New Roman'", "#4b5563")
     }
-    drawText(`EIN: ${data.employer_ein || "XX-XXXXXXX"}`, margin + 30, y + (data.employer_phone ? 90 : 70), "12px 'Times New Roman'", "#4b5563")
+    drawText(`EIN: ${data.employer_ein || "XX-XXXXXXX"}`, companyInfoX, y + (data.employer_phone ? 90 : 70), "12px 'Times New Roman'", "#4b5563")
 
     // Paystub box (custom teal background)
     const payStubBoxWidth = 120
@@ -178,8 +231,9 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     drawText(`Pay Date: ${formatDate(data.pay_date)}`, canvasWidth - margin - 30, y + 45, "11px 'Times New Roman'", "#4b5563", "right")
     drawText(`Pay Period: ${formatDate(data.pay_period_start)} - ${formatDate(data.pay_period_end)}`, canvasWidth - margin - 30, y + 65, "11px 'Times New Roman'", "#4b5563", "right")
 
-    // Header separator line – add extra space if employer phone is printed
-    const headerHeight = data.employer_phone ? 110 : 90
+    // Header separator line – add extra space if employer phone is printed or logo is present
+    const hasLogo = data.employer_logo ? true : false
+    const headerHeight = (data.employer_phone || hasLogo) ? 110 : 90
     y += headerHeight
     drawLine(margin + 30, y, canvasWidth - margin - 30, y, "#d1d5db", 2)
     y += 30

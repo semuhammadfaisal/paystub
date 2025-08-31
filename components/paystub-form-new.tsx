@@ -990,9 +990,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
         </div>
       </div>
 
-      <div className="pt-6 border-t">
-        <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Generate Paystub PDF</Button>
-      </div>
+      
     </div>
   )
 }
