@@ -17,30 +17,50 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
   const handleInputChange = (field: keyof PaystubData, value: string | number | boolean) => {
     const updates: Partial<PaystubData> = { [field]: value }
     
-    // Trigger recalculation when key fields change
-    if (field === 'hourlyRate' || field === 'hoursWorked' || field === 'overtimeRate' || field === 'overtimeHours' || 
-        field === 'medicare' || field === 'socialSecurity' || field === 'federalTax' || field === 'stateTax') {
+    // Auto-calculate dependent fields
+    if (field === "hourlyRate" || field === "hoursWorked" || field === "overtimeRate" || field === "overtimeHours") {
+      const hourlyRate = field === "hourlyRate" ? Number(value) : data.hourlyRate
+      const hoursWorked = field === "hoursWorked" ? Number(value) : data.hoursWorked
+      const overtimeRate = field === "overtimeRate" ? Number(value) : data.overtimeRate
+      const overtimeHours = field === "overtimeHours" ? Number(value) : data.overtimeHours
       
-      // Calculate with the new value
-      const newData = { ...data, [field]: value }
-      
-      // Calculate gross pay
-      if (newData.payType === "hourly") {
-        const regularPay = (newData.hourlyRate || 0) * (newData.hoursWorked || 0)
-        const overtimePay = (newData.overtimeRate || 0) * (newData.overtimeHours || 0)
-        updates.grossPay = regularPay + overtimePay
-      } else {
-        updates.grossPay = newData.salary || 0
-      }
-      
-      // Calculate total deductions
-      updates.totalDeductions = (newData.medicare || 0) + (newData.socialSecurity || 0) + (newData.federalTax || 0) + (newData.stateTax || 0)
-      
+      const regularPay = hourlyRate * hoursWorked
+      const overtimePay = overtimeRate * overtimeHours
+      updates.grossPay = regularPay + overtimePay
       // Calculate net pay
       updates.netPay = (updates.grossPay || 0) - (updates.totalDeductions || 0)
     }
     
     onUpdate(updates)
+  }
+
+  const handleNumberInput = (field: keyof PaystubData, inputValue: string) => {
+    // If input is empty or just whitespace, set to 0
+    if (inputValue === "" || inputValue.trim() === "") {
+      handleInputChange(field, 0)
+      return
+    }
+    // Parse the number and update
+    const numValue = Number.parseFloat(inputValue) || 0
+    handleInputChange(field, numValue)
+  }
+
+  const getDisplayValue = (field: keyof PaystubData): string => {
+    const value = data[field] as number
+    // Show empty string if value is 0, otherwise show the actual value
+    return value === 0 ? "" : String(value)
+  }
+
+  const handleNumberInputWithBackspace = (field: keyof PaystubData, inputValue: string) => {
+    // If input is completely empty (after backspace), keep it empty and set value to 0
+    if (inputValue === "") {
+      handleInputChange(field, 0)
+      return
+    }
+    // For any other input, parse normally
+    const numValue = Number.parseFloat(inputValue)
+    // If parsing results in NaN (invalid input), set to 0
+    handleInputChange(field, isNaN(numValue) ? 0 : numValue)
   }
 
   // Calculate gross pay for current period (for display only)
@@ -768,20 +788,20 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                       <Input
                         type="number"
                         step="0.01"
-                        value={data.hourlyRate}
-                        onChange={(e) => handleInputChange("hourlyRate", Number.parseFloat(e.target.value) || 0)}
+                        value={getDisplayValue('hourlyRate')}
+                        onChange={(e) => handleNumberInputWithBackspace("hourlyRate", e.target.value)}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="20.00"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
                         type="number"
                         step="0.5"
-                        value={data.hoursWorked}
-                        onChange={(e) => handleInputChange("hoursWorked", Number.parseFloat(e.target.value) || 0)}
+                        value={getDisplayValue('hoursWorked')}
+                        onChange={(e) => handleNumberInputWithBackspace("hoursWorked", e.target.value)}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="80"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium border-r border-gray-200">
@@ -791,10 +811,14 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                       <Input
                         type="number"
                         step="0.01"
-                        value={data.ytdGrossPay - calculateGrossPay()}
-                        onChange={(e) => handleInputChange("ytdGrossPay", (Number.parseFloat(e.target.value) || 0) + calculateGrossPay())}
+                        value={getDisplayValue('ytdGrossPay') ? String(data.ytdGrossPay - calculateGrossPay()) : ""}
+                        onChange={(e) => {
+                          const inputValue = e.target.value
+                          const priorYtd = inputValue === "" ? 0 : Number.parseFloat(inputValue) || 0
+                          handleInputChange("ytdGrossPay", priorYtd + calculateGrossPay())
+                        }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="27,200.00"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
@@ -807,20 +831,20 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                       <Input
                         type="number"
                         step="0.01"
-                        value={data.overtimeRate}
-                        onChange={(e) => handleInputChange("overtimeRate", Number.parseFloat(e.target.value) || 0)}
+                        value={getDisplayValue('overtimeRate')}
+                        onChange={(e) => handleNumberInputWithBackspace("overtimeRate", e.target.value)}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="0.00"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
                         type="number"
                         step="0.5"
-                        value={data.overtimeHours}
-                        onChange={(e) => handleInputChange("overtimeHours", Number.parseFloat(e.target.value) || 0)}
+                        value={getDisplayValue('overtimeHours')}
+                        onChange={(e) => handleNumberInputWithBackspace("overtimeHours", e.target.value)}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="0"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium border-r border-gray-200">
@@ -829,14 +853,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-center text-sm border-r border-gray-200">0.00</td>
                     <td className="p-4 text-center text-sm">0.00</td>
                   </tr>
-                  <tr className="border-b border-gray-200">
-                    <td className="p-4 text-primary text-sm cursor-pointer border-r border-gray-200">+ Add earnings</td>
-                    <td className="p-4 border-r border-gray-200"></td>
-                    <td className="p-4 border-r border-gray-200"></td>
-                    <td className="p-4 border-r border-gray-200"></td>
-                    <td className="p-4 border-r border-gray-200"></td>
-                    <td className="p-4"></td>
-                  </tr>
+                 
                   <tr className="bg-gray-50">
                     <td className="p-4 text-sm font-semibold text-gray-700 border-r border-gray-200"></td>
                     <td className="p-4 border-r border-gray-200"></td>
@@ -867,20 +884,20 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                       <Input
                         type="number"
                         step="0.01"
-                        value={data.medicare}
-                        onChange={(e) => handleInputChange("medicare", Number.parseFloat(e.target.value) || 0)}
+                        value={getDisplayValue('medicare')}
+                        onChange={(e) => handleNumberInputWithBackspace("medicare", e.target.value)}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="23.20"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
                         type="number"
                         step="0.01"
-                        value={data.ytdMedicare - (data.medicare || 0)}
+                        value={data.ytdMedicare - (data.medicare || 0) === 0 ? "" : String(data.ytdMedicare - (data.medicare || 0))}
                         onChange={(e) => handleInputChange("ytdMedicare", (Number.parseFloat(e.target.value) || 0) + (data.medicare || 0))}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="394.40"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
@@ -893,20 +910,20 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                       <Input
                         type="number"
                         step="0.01"
-                        value={data.socialSecurity}
-                        onChange={(e) => handleInputChange("socialSecurity", Number.parseFloat(e.target.value) || 0)}
+                        value={getDisplayValue('socialSecurity')}
+                        onChange={(e) => handleNumberInputWithBackspace("socialSecurity", e.target.value)}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="99.20"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
                         type="number"
                         step="0.01"
-                        value={data.ytdSocialSecurity - (data.socialSecurity || 0)}
+                        value={data.ytdSocialSecurity - (data.socialSecurity || 0) === 0 ? "" : String(data.ytdSocialSecurity - (data.socialSecurity || 0))}
                         onChange={(e) => handleInputChange("ytdSocialSecurity", (Number.parseFloat(e.target.value) || 0) + (data.socialSecurity || 0))}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="1,686.40"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
@@ -919,20 +936,20 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                       <Input
                         type="number"
                         step="0.01"
-                        value={data.federalTax}
-                        onChange={(e) => handleInputChange("federalTax", Number.parseFloat(e.target.value) || 0)}
+                        value={getDisplayValue('federalTax')}
+                        onChange={(e) => handleNumberInputWithBackspace("federalTax", e.target.value)}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="113.60"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
                         type="number"
                         step="0.01"
-                        value={data.ytdFederalTax - (data.federalTax || 0)}
+                        value={data.ytdFederalTax - (data.federalTax || 0) === 0 ? "" : String(data.ytdFederalTax - (data.federalTax || 0))}
                         onChange={(e) => handleInputChange("ytdFederalTax", (Number.parseFloat(e.target.value) || 0) + (data.federalTax || 0))}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="1,931.20"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
@@ -945,32 +962,27 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                       <Input
                         type="number"
                         step="0.01"
-                        value={data.stateTax}
-                        onChange={(e) => handleInputChange("stateTax", Number.parseFloat(e.target.value) || 0)}
+                        value={getDisplayValue('stateTax')}
+                        onChange={(e) => handleNumberInputWithBackspace("stateTax", e.target.value)}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="0.00"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
                         type="number"
                         step="0.01"
-                        value={data.ytdStateTax - (data.stateTax || 0)}
+                        value={data.ytdStateTax - (data.stateTax || 0) === 0 ? "" : String(data.ytdStateTax - (data.stateTax || 0))}
                         onChange={(e) => handleInputChange("ytdStateTax", (Number.parseFloat(e.target.value) || 0) + (data.stateTax || 0))}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder="0.00"
+                        placeholder=""
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
                       {data.ytdStateTax.toFixed(2)}
                     </td>
                   </tr>
-                  <tr className="border-b border-gray-200">
-                    <td className="p-4 text-primary text-sm cursor-pointer border-r border-gray-200">+ Add deduction</td>
-                    <td className="p-4 border-r border-gray-200"></td>
-                    <td className="p-4 border-r border-gray-200"></td>
-                    <td className="p-4"></td>
-                  </tr>
+                 
                   <tr className="bg-gray-50">
                     <td className="p-4 text-sm font-semibold text-gray-700 border-r border-gray-200">Deduction Total</td>
                     <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{calculateTotalDeductions().toFixed(2)}</td>
