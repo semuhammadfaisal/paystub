@@ -59,6 +59,7 @@ export interface PaystubData {
   ytd_state_tax?: number
   ytd_social_security?: number
   ytd_medicare?: number
+  ytd_overtime_pay?: number
   ytd_total_deductions?: number
   ytd_net_pay?: number
 }
@@ -273,12 +274,12 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     if (data.pay_type === "hourly") {
       drawText(`Pay Type: Hourly`, rightColumnX, rightY, "12px 'Times New Roman'", "#1f2937")
       rightY += 20
-      drawText(`Hourly Rate: ${formatCurrency(data.hourly_rate)}`, rightColumnX, rightY, "12px 'Times New Roman'", "#1f2937")
+      drawText(`Hourly Rate: ${formatCurrency(data.hourly_rate || 0)}`, rightColumnX, rightY, "12px 'Times New Roman'", "#1f2937")
       rightY += 20
       drawText(`Hours Worked: ${data.hours_worked || 0}`, rightColumnX, rightY, "12px 'Times New Roman'", "#1f2937")
       if (data.overtime_hours && data.overtime_hours > 0) {
         rightY += 20
-        drawText(`Overtime Hours: ${data.overtime_hours} @ ${formatCurrency(data.overtime_rate || data.hourly_rate * 1.5)}`, rightColumnX, rightY, "11px 'Times New Roman'", "#1f2937")
+        drawText(`Overtime Hours: ${data.overtime_hours} @ ${formatCurrency(data.overtime_rate || (data.hourly_rate || 0) * 1.5)}`, rightColumnX, rightY, "11px 'Times New Roman'", "#1f2937")
       }
     } else {
       drawText(`Pay Type: Salary`, rightColumnX, rightY, "12px 'Times New Roman'", "#1f2937")
@@ -313,7 +314,7 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
       earningsY += 22
 
       if (data.overtime_hours && data.overtime_hours > 0) {
-        const overtimePay = data.overtime_hours * (data.overtime_rate || data.hourly_rate * 1.5)
+        const overtimePay = data.overtime_hours * (data.overtime_rate || (data.hourly_rate || 0) * 1.5)
         drawText(`Overtime Pay (${data.overtime_hours} hrs)`, earningsX, earningsY, "12px 'Times New Roman'", "#1f2937")
         drawText(formatCurrency(overtimePay), earningsX + columnWidth - 50, earningsY, "12px 'Times New Roman'", "#1f2937", "right")
         earningsY += 22
@@ -392,9 +393,9 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     ]
     
     deductions.forEach(deduction => {
-      if (deduction.amount > 0) {
+      if ((deduction.amount || 0) > 0) {
         drawText(deduction.label, deductionsX, deductionsY, "12px 'Times New Roman'", "#1f2937")
-        drawText(formatCurrency(deduction.amount), deductionsX + columnWidth - 50, deductionsY, "12px 'Times New Roman'", "#1f2937", "right")
+        drawText(formatCurrency(deduction.amount || 0), deductionsX + columnWidth - 50, deductionsY, "12px 'Times New Roman'", "#1f2937", "right")
         deductionsY += 22
       }
     })
@@ -429,6 +430,9 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     y += 18
     drawText("YTD Medicare", ytdLabelX, y, "12px 'Times New Roman'", "#1f2937")
     drawText(formatCurrency(data.ytd_medicare || 0), ytdValueX, y, "12px 'Times New Roman'", "#1f2937")
+    y += 18
+    drawText("YTD Overtime Pay", ytdLabelX, y, "12px 'Times New Roman'", "#1f2937")
+    drawText(formatCurrency(data.ytd_overtime_pay || 0), ytdValueX, y, "12px 'Times New Roman'", "#1f2937")
     y += 18
     drawText("YTD Total Deductions", ytdLabelX, y, "12px 'Times New Roman'", "#1f2937")
     drawText(formatCurrency(data.ytd_total_deductions || 0), ytdValueX, y, "12px 'Times New Roman'", "#1f2937")

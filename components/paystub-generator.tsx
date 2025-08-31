@@ -110,6 +110,7 @@ export interface PaystubData {
   ytdStateTax: number
   ytdSocialSecurity: number
   ytdMedicare: number
+  ytdOvertimePay: number
   ytdTotalDeductions: number
   ytdNetPay: number
 
@@ -192,6 +193,7 @@ const initialData: PaystubData = {
   ytdStateTax: 0,
   ytdSocialSecurity: 0,
   ytdMedicare: 0,
+  ytdOvertimePay: 0,
   ytdTotalDeductions: 0,
   ytdNetPay: 0,
   grossPay: 0,
@@ -371,6 +373,7 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
         ytd_state_tax: paystubData.ytdStateTax,
         ytd_social_security: paystubData.ytdSocialSecurity,
         ytd_medicare: paystubData.ytdMedicare,
+        ytd_overtime_pay: paystubData.ytdOvertimePay,
         ytd_total_deductions: paystubData.ytdTotalDeductions,
         ytd_net_pay: paystubData.ytdNetPay,
         gross_pay: paystubData.grossPay,
@@ -463,6 +466,7 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
         ytd_state_tax: paystubData.ytdStateTax,
         ytd_social_security: paystubData.ytdSocialSecurity,
         ytd_medicare: paystubData.ytdMedicare,
+        ytd_overtime_pay: paystubData.ytdOvertimePay,
         ytd_total_deductions: paystubData.ytdTotalDeductions,
         ytd_net_pay: paystubData.ytdNetPay,
 

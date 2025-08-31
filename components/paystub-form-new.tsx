@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { StepHeader } from "@/components/step-header"
 import type { PaystubData } from "@/components/paystub-generator"
+import { useState } from "react"
 
 interface PaystubFormProps {
   data: PaystubData
@@ -14,53 +15,45 @@ interface PaystubFormProps {
 }
 
 export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
+  const [displayValues, setDisplayValues] = useState<Record<string, string>>({})
+
+  const setDisplay = (key: string, val: string) => {
+    setDisplayValues((prev) => ({ ...prev, [key]: val }))
+  }
+
+  const getDisplay = (key: string, fallback: string) => {
+    return Object.prototype.hasOwnProperty.call(displayValues, key) ? displayValues[key] : fallback
+  }
+
+  const toNumber = (v: string) => (v.trim() === "" ? 0 : Number.parseFloat(v))
+
   const handleInputChange = (field: keyof PaystubData, value: string | number | boolean) => {
     const updates: Partial<PaystubData> = { [field]: value }
     
-    // Auto-calculate dependent fields
-    if (field === "hourlyRate" || field === "hoursWorked" || field === "overtimeRate" || field === "overtimeHours") {
-      const hourlyRate = field === "hourlyRate" ? Number(value) : data.hourlyRate
-      const hoursWorked = field === "hoursWorked" ? Number(value) : data.hoursWorked
-      const overtimeRate = field === "overtimeRate" ? Number(value) : data.overtimeRate
-      const overtimeHours = field === "overtimeHours" ? Number(value) : data.overtimeHours
+    // Trigger recalculation when key fields change
+    if (field === 'hourlyRate' || field === 'hoursWorked' || field === 'overtimeRate' || field === 'overtimeHours' || 
+        field === 'medicare' || field === 'socialSecurity' || field === 'federalTax' || field === 'stateTax') {
       
-      const regularPay = hourlyRate * hoursWorked
-      const overtimePay = overtimeRate * overtimeHours
-      updates.grossPay = regularPay + overtimePay
+      // Calculate with the new value
+      const newData = { ...data, [field]: value }
+      
+      // Calculate gross pay
+      if (newData.payType === "hourly") {
+        const regularPay = (newData.hourlyRate || 0) * (newData.hoursWorked || 0)
+        const overtimePay = (newData.overtimeRate || 0) * (newData.overtimeHours || 0)
+        updates.grossPay = regularPay + overtimePay
+      } else {
+        updates.grossPay = newData.salary || 0
+      }
+      
+      // Calculate total deductions
+      updates.totalDeductions = (newData.medicare || 0) + (newData.socialSecurity || 0) + (newData.federalTax || 0) + (newData.stateTax || 0)
+      
       // Calculate net pay
       updates.netPay = (updates.grossPay || 0) - (updates.totalDeductions || 0)
     }
     
     onUpdate(updates)
-  }
-
-  const handleNumberInput = (field: keyof PaystubData, inputValue: string) => {
-    // If input is empty or just whitespace, set to 0
-    if (inputValue === "" || inputValue.trim() === "") {
-      handleInputChange(field, 0)
-      return
-    }
-    // Parse the number and update
-    const numValue = Number.parseFloat(inputValue) || 0
-    handleInputChange(field, numValue)
-  }
-
-  const getDisplayValue = (field: keyof PaystubData): string => {
-    const value = data[field] as number
-    // Show empty string if value is 0, otherwise show the actual value
-    return value === 0 ? "" : String(value)
-  }
-
-  const handleNumberInputWithBackspace = (field: keyof PaystubData, inputValue: string) => {
-    // If input is completely empty (after backspace), keep it empty and set value to 0
-    if (inputValue === "") {
-      handleInputChange(field, 0)
-      return
-    }
-    // For any other input, parse normally
-    const numValue = Number.parseFloat(inputValue)
-    // If parsing results in NaN (invalid input), set to 0
-    handleInputChange(field, isNaN(numValue) ? 0 : numValue)
   }
 
   // Calculate gross pay for current period (for display only)
@@ -156,7 +149,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
 
             <div className="space-y-3">
               <Label htmlFor="email" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                Email address *
+                Email address
                 <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center">
                   <span className="text-white text-xs">?</span>
                 </div>
@@ -168,7 +161,6 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                 onChange={(e) => handleInputChange("email", e.target.value)}
                 className="border border-gray-300 rounded px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary"
                 placeholder=""
-                required
               />
             </div>
           </div>
@@ -786,22 +778,28 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-sm text-gray-700 border-r border-gray-200">Regular</td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
-                        type="number"
-                        step="0.01"
-                        value={getDisplayValue('hourlyRate')}
-                        onChange={(e) => handleNumberInputWithBackspace("hourlyRate", e.target.value)}
+                        type="text"
+                        value={getDisplay('hourlyRate', String(data.hourlyRate || ''))}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setDisplay('hourlyRate', v)
+                          handleInputChange("hourlyRate", toNumber(v))
+                        }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
+                        placeholder="20.00"
                       />
                     </td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
-                        type="number"
-                        step="0.5"
-                        value={getDisplayValue('hoursWorked')}
-                        onChange={(e) => handleNumberInputWithBackspace("hoursWorked", e.target.value)}
+                        type="text"
+                        value={getDisplay('hoursWorked', String(data.hoursWorked || ''))}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setDisplay('hoursWorked', v)
+                          handleInputChange("hoursWorked", toNumber(v))
+                        }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
+                        placeholder="80"
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium border-r border-gray-200">
@@ -809,16 +807,15 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     </td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
-                        type="number"
-                        step="0.01"
-                        value={getDisplayValue('ytdGrossPay') ? String(data.ytdGrossPay - calculateGrossPay()) : ""}
+                        type="text"
+                        value={getDisplay('priorYtdGrossPay', String((data.ytdGrossPay - calculateGrossPay()) || ''))}
                         onChange={(e) => {
-                          const inputValue = e.target.value
-                          const priorYtd = inputValue === "" ? 0 : Number.parseFloat(inputValue) || 0
-                          handleInputChange("ytdGrossPay", priorYtd + calculateGrossPay())
+                          const v = e.target.value
+                          setDisplay('priorYtdGrossPay', v)
+                          handleInputChange("ytdGrossPay", toNumber(v) + calculateGrossPay())
                         }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
+                        placeholder="27,200.00"
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
@@ -829,29 +826,49 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-sm text-gray-700 border-r border-gray-200">Overtime</td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
-                        type="number"
-                        step="0.01"
-                        value={getDisplayValue('overtimeRate')}
-                        onChange={(e) => handleNumberInputWithBackspace("overtimeRate", e.target.value)}
+                        type="text"
+                        value={getDisplay('overtimeRate', String(data.overtimeRate || ''))}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setDisplay('overtimeRate', v)
+                          handleInputChange("overtimeRate", toNumber(v))
+                        }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
+                        placeholder="0.00"
                       />
                     </td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
-                        type="number"
-                        step="0.5"
-                        value={getDisplayValue('overtimeHours')}
-                        onChange={(e) => handleNumberInputWithBackspace("overtimeHours", e.target.value)}
+                        type="text"
+                        value={getDisplay('overtimeHours', String(data.overtimeHours || ''))}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setDisplay('overtimeHours', v)
+                          handleInputChange("overtimeHours", toNumber(v))
+                        }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
+                        placeholder="0"
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium border-r border-gray-200">
                       {((data.overtimeRate || 0) * (data.overtimeHours || 0)).toFixed(2)}
                     </td>
-                    <td className="p-4 text-center text-sm border-r border-gray-200">0.00</td>
-                    <td className="p-4 text-center text-sm">0.00</td>
+                    <td className="p-4 text-center text-sm border-r border-gray-200">
+                      <Input
+                        type="text"
+                        value={getDisplay('priorYtdOvertime', String((data.ytdOvertimePay || 0) || ''))}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setDisplay('priorYtdOvertime', v)
+                          handleInputChange("ytdOvertimePay", toNumber(v) + ((data.overtimeRate || 0) * (data.overtimeHours || 0)))
+                        }}
+                        className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
+                        placeholder="0.00"
+                      />
+                    </td>
+                    <td className="p-4 text-center text-sm font-medium">
+                      {((data.ytdOvertimePay || 0) + ((data.overtimeRate || 0) * (data.overtimeHours || 0))).toFixed(2)}
+                    </td>
                   </tr>
                  
                   <tr className="bg-gray-50">
@@ -882,22 +899,28 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-sm text-gray-700 border-r border-gray-200">FICA - Medicare</td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
-                        type="number"
-                        step="0.01"
-                        value={getDisplayValue('medicare')}
-                        onChange={(e) => handleNumberInputWithBackspace("medicare", e.target.value)}
+                        type="text"
+                        value={getDisplay('medicare', String(data.medicare || ''))}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setDisplay('medicare', v)
+                          handleInputChange("medicare", toNumber(v))
+                        }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
+                        placeholder="23.20"
                       />
                     </td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
-                        type="number"
-                        step="0.01"
-                        value={data.ytdMedicare - (data.medicare || 0) === 0 ? "" : String(data.ytdMedicare - (data.medicare || 0))}
-                        onChange={(e) => handleInputChange("ytdMedicare", (Number.parseFloat(e.target.value) || 0) + (data.medicare || 0))}
+                        type="text"
+                        value={getDisplay('priorYtdMedicare', String((data.ytdMedicare - (data.medicare || 0)) || ''))}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setDisplay('priorYtdMedicare', v)
+                          handleInputChange("ytdMedicare", toNumber(v) + (data.medicare || 0))
+                        }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
+                        placeholder="394.40"
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
@@ -908,22 +931,28 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-sm text-gray-700 border-r border-gray-200">FICA - Social Security</td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
-                        type="number"
-                        step="0.01"
-                        value={getDisplayValue('socialSecurity')}
-                        onChange={(e) => handleNumberInputWithBackspace("socialSecurity", e.target.value)}
+                        type="text"
+                        value={getDisplay('socialSecurity', String(data.socialSecurity || ''))}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setDisplay('socialSecurity', v)
+                          handleInputChange("socialSecurity", toNumber(v))
+                        }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
+                        placeholder="99.20"
                       />
                     </td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
-                        type="number"
-                        step="0.01"
-                        value={data.ytdSocialSecurity - (data.socialSecurity || 0) === 0 ? "" : String(data.ytdSocialSecurity - (data.socialSecurity || 0))}
-                        onChange={(e) => handleInputChange("ytdSocialSecurity", (Number.parseFloat(e.target.value) || 0) + (data.socialSecurity || 0))}
+                        type="text"
+                        value={getDisplay('priorYtdSocialSecurity', String((data.ytdSocialSecurity - (data.socialSecurity || 0)) || ''))}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setDisplay('priorYtdSocialSecurity', v)
+                          handleInputChange("ytdSocialSecurity", toNumber(v) + (data.socialSecurity || 0))
+                        }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
+                        placeholder="1,686.40"
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
@@ -934,22 +963,28 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-sm text-gray-700 border-r border-gray-200">Federal Tax</td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
-                        type="number"
-                        step="0.01"
-                        value={getDisplayValue('federalTax')}
-                        onChange={(e) => handleNumberInputWithBackspace("federalTax", e.target.value)}
+                        type="text"
+                        value={getDisplay('federalTax', String(data.federalTax || ''))}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setDisplay('federalTax', v)
+                          handleInputChange("federalTax", toNumber(v))
+                        }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
+                        placeholder="113.60"
                       />
                     </td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
-                        type="number"
-                        step="0.01"
-                        value={data.ytdFederalTax - (data.federalTax || 0) === 0 ? "" : String(data.ytdFederalTax - (data.federalTax || 0))}
-                        onChange={(e) => handleInputChange("ytdFederalTax", (Number.parseFloat(e.target.value) || 0) + (data.federalTax || 0))}
+                        type="text"
+                        value={getDisplay('priorYtdFederalTax', String((data.ytdFederalTax - (data.federalTax || 0)) || ''))}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setDisplay('priorYtdFederalTax', v)
+                          handleInputChange("ytdFederalTax", toNumber(v) + (data.federalTax || 0))
+                        }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
+                        placeholder="1,931.20"
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
@@ -960,22 +995,28 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-sm text-gray-700 border-r border-gray-200">State Tax</td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
-                        type="number"
-                        step="0.01"
-                        value={getDisplayValue('stateTax')}
-                        onChange={(e) => handleNumberInputWithBackspace("stateTax", e.target.value)}
+                        type="text"
+                        value={getDisplay('stateTax', String(data.stateTax || ''))}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setDisplay('stateTax', v)
+                          handleInputChange("stateTax", toNumber(v))
+                        }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
+                        placeholder="0.00"
                       />
                     </td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
-                        type="number"
-                        step="0.01"
-                        value={data.ytdStateTax - (data.stateTax || 0) === 0 ? "" : String(data.ytdStateTax - (data.stateTax || 0))}
-                        onChange={(e) => handleInputChange("ytdStateTax", (Number.parseFloat(e.target.value) || 0) + (data.stateTax || 0))}
+                        type="text"
+                        value={getDisplay('priorYtdStateTax', String((data.ytdStateTax - (data.stateTax || 0)) || ''))}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setDisplay('priorYtdStateTax', v)
+                          handleInputChange("ytdStateTax", toNumber(v) + (data.stateTax || 0))
+                        }}
                         className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
+                        placeholder="0.00"
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
