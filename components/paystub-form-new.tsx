@@ -781,17 +781,31 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                   <tr className="border-b border-gray-200">
                     <td className="p-4 text-sm text-gray-700 border-r border-gray-200">Regular</td>
                     <td className="p-4 border-r border-gray-200">
-                      <Input
-                        type="text"
-                        value={getDisplay('hourlyRate', String(data.hourlyRate || ''))}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setDisplay('hourlyRate', v)
-                          handleInputChange("hourlyRate", toNumber(v))
-                        }}
-                        className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
-                      />
+                      {data.payType === "salary" ? (
+                        <Input
+                          type="text"
+                          value={getDisplay('salary', String(data.salary || ''))}
+                          onChange={(e) => {
+                            const v = e.target.value
+                            setDisplay('salary', v)
+                            handleInputChange("salary", toNumber(v))
+                          }}
+                          className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
+                          placeholder="Salary Amount"
+                        />
+                      ) : (
+                        <Input
+                          type="text"
+                          value={getDisplay('hourlyRate', String(data.hourlyRate || ''))}
+                          onChange={(e) => {
+                            const v = e.target.value
+                            setDisplay('hourlyRate', v)
+                            handleInputChange("hourlyRate", toNumber(v))
+                          }}
+                          className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
+                          placeholder="Hourly Rate"
+                        />
+                      )}
                     </td>
                     <td className="p-4 border-r border-gray-200">
                       <Input
@@ -802,14 +816,23 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                           setDisplay('hoursWorked', v)
                           handleInputChange("hoursWorked", toNumber(v))
                         }}
-                        className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
+                        disabled={data.payType === "salary"}
+                        className={`text-center border-b-2 rounded-none border-t-0 border-l-0 border-r-0 text-sm ${
+                          data.payType === "salary" 
+                            ? "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed" 
+                            : "border-teal-500 bg-transparent"
+                        }`}
                         placeholder=""
                       />
                     </td>
                     <td className="p-4 text-center text-sm font-medium border-r border-gray-200">
                       {(() => {
-                        const result = (data.hourlyRate || 0) * (data.hoursWorked || 0);
-                        return result ? result.toFixed(2) : '';
+                        if (data.payType === "salary") {
+                          return data.salary ? data.salary.toFixed(2) : '';
+                        } else {
+                          const result = (data.hourlyRate || 0) * (data.hoursWorked || 0);
+                          return result ? result.toFixed(2) : '';
+                        }
                       })()}
                     </td>
                     <td className="p-4 border-r border-gray-200">
