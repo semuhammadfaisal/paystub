@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { StepHeader } from "@/components/step-header"
 import type { PaystubData } from "@/components/paystub-generator"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { calculateTaxes, type TaxCalculationInput } from "@/lib/tax-calculator"
 
 interface PaystubFormProps {
   data: PaystubData
@@ -16,6 +17,39 @@ interface PaystubFormProps {
 
 export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
   const [displayValues, setDisplayValues] = useState<Record<string, string>>({})
+
+  // Auto-calculate taxes when component loads or key data changes
+  useEffect(() => {
+    const grossPay = data.payType === "hourly" 
+      ? ((data.hourlyRate || 0) * (data.hoursWorked || 0)) + ((data.overtimeRate || 0) * (data.overtimeHours || 0))
+      : (data.salary || 0)
+    
+    if (grossPay > 0) {
+      const taxInput: TaxCalculationInput = {
+        grossPay,
+        payFrequency: data.payFrequency || 'bi-weekly',
+        maritalStatus: data.maritalStatus || 'single', 
+        exemptions: data.exemptions || 0,
+        taxState: data.taxState || 'CA', // Default to California for testing
+        ytdGrossPay: 0 // Force YTD to 0 to ensure SS tax calculates properly
+      }
+      
+      console.log('Tax calculation input:', taxInput)
+      const taxResult = calculateTaxes(taxInput)
+      console.log('Tax calculation result:', taxResult)
+      
+      // Always update taxes to ensure they're calculated
+      onUpdate({
+        medicare: taxResult.medicare + taxResult.additionalMedicare,
+        socialSecurity: taxResult.socialSecurity,
+        federalTax: taxResult.federalTax,
+        stateTax: taxResult.stateTax,
+        totalDeductions: taxResult.totalDeductions,
+        netPay: taxResult.netPay,
+        grossPay
+      })
+    }
+  }, [data.hourlyRate, data.hoursWorked, data.overtimeRate, data.overtimeHours, data.salary, data.payType, data.payFrequency, data.maritalStatus, data.exemptions, data.taxState, data.ytdGrossPay])
 
   const setDisplay = (key: string, val: string) => {
     setDisplayValues((prev) => ({ ...prev, [key]: val }))
@@ -31,30 +65,127 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
 
   const toNumber = (v: string) => (v.trim() === "" ? 0 : Number.parseFloat(v))
 
+  // Helper function to get maximum paystubs based on frequency
+  const getMaxPaystubs = (frequency: string): number => {
+    switch (frequency?.toLowerCase()) {
+      case 'daily': return 260 // 5 days/week * 52 weeks
+      case 'weekly': return 52
+      case 'bi-weekly': return 26
+      case 'semi-monthly': return 24
+      case 'monthly': return 12
+      case 'quarterly': return 4
+      case 'semi-annually': return 2
+      case 'annually': return 1
+      default: return 26 // Default to bi-weekly
+    }
+  }
+
+  // Helper function to calculate Prior YTD from current pay period number
+  const calculatePriorYTD = (currentAmount: number, payPeriodNumber: number): number => {
+    // Prior YTD = (current period amount) × (pay period number - 1)
+    // This simulates accumulated earnings/deductions from previous pay periods
+    return currentAmount * Math.max(0, payPeriodNumber - 1)
+  }
+
+  // Helper function to calculate YTD Total
+  const calculateYTDTotal = (currentAmount: number, priorYTD: number): number => {
+    return currentAmount + priorYTD
+  }
+
   const handleInputChange = (field: keyof PaystubData, value: string | number | boolean) => {
     const updates: Partial<PaystubData> = { [field]: value }
     
-    // Trigger recalculation when key fields change
+    // Trigger recalculation when key fields change (including payPeriodNumber)
     if (field === 'hourlyRate' || field === 'hoursWorked' || field === 'overtimeRate' || field === 'overtimeHours' || 
-        field === 'medicare' || field === 'socialSecurity' || field === 'federalTax' || field === 'stateTax') {
+        field === 'salary' || field === 'payType' || field === 'payFrequency' || field === 'maritalStatus' || field === 'exemptions' || field === 'taxState' || field === 'payPeriodNumber') {
       
       // Calculate with the new value
       const newData = { ...data, [field]: value }
       
       // Calculate gross pay
+      let grossPay = 0
       if (newData.payType === "hourly") {
         const regularPay = (newData.hourlyRate || 0) * (newData.hoursWorked || 0)
         const overtimePay = (newData.overtimeRate || 0) * (newData.overtimeHours || 0)
-        updates.grossPay = regularPay + overtimePay
+        grossPay = regularPay + overtimePay
       } else {
-        updates.grossPay = newData.salary || 0
+        grossPay = newData.salary || 0
       }
+      updates.grossPay = grossPay
       
-      // Calculate total deductions
-      updates.totalDeductions = (newData.medicare || 0) + (newData.socialSecurity || 0) + (newData.federalTax || 0) + (newData.stateTax || 0)
-      
-      // Calculate net pay
-      updates.netPay = (updates.grossPay || 0) - (updates.totalDeductions || 0)
+      // Auto-calculate taxes if we have sufficient data
+      if (grossPay > 0 && newData.payFrequency && newData.maritalStatus && newData.taxState) {
+        const taxInput: TaxCalculationInput = {
+          grossPay,
+          payFrequency: newData.payFrequency,
+          maritalStatus: newData.maritalStatus,
+          exemptions: newData.exemptions || 0,
+          taxState: newData.taxState,
+          ytdGrossPay: newData.ytdGrossPay || 0
+        }
+        
+        const taxResult = calculateTaxes(taxInput)
+        
+        // Update tax fields with calculated values
+        updates.medicare = taxResult.medicare + taxResult.additionalMedicare
+        updates.socialSecurity = taxResult.socialSecurity
+        updates.federalTax = taxResult.federalTax
+        updates.stateTax = taxResult.stateTax
+        updates.totalDeductions = taxResult.totalDeductions
+        updates.netPay = taxResult.netPay
+        
+        // Auto-calculate YTD values based on pay period number
+        const payPeriodNum = newData.payPeriodNumber || 1
+        updates.ytdGrossPay = calculateYTDTotal(grossPay, calculatePriorYTD(grossPay, payPeriodNum))
+        updates.ytdMedicare = calculateYTDTotal(updates.medicare, calculatePriorYTD(updates.medicare, payPeriodNum))
+        updates.ytdSocialSecurity = calculateYTDTotal(updates.socialSecurity, calculatePriorYTD(updates.socialSecurity, payPeriodNum))
+        updates.ytdFederalTax = calculateYTDTotal(updates.federalTax, calculatePriorYTD(updates.federalTax, payPeriodNum))
+        updates.ytdStateTax = calculateYTDTotal(updates.stateTax, calculatePriorYTD(updates.stateTax, payPeriodNum))
+        updates.ytdTotalDeductions = calculateYTDTotal(updates.totalDeductions, calculatePriorYTD(updates.totalDeductions, payPeriodNum))
+        updates.ytdNetPay = calculateYTDTotal(updates.netPay, calculatePriorYTD(updates.netPay, payPeriodNum))
+      } else if (grossPay > 0) {
+        // Simplified auto-calculation with defaults if some fields missing
+        const defaultPayFrequency = newData.payFrequency || 'bi-weekly'
+        const defaultMaritalStatus = newData.maritalStatus || 'single'
+        const defaultTaxState = newData.taxState || 'CA' // Default to California
+        
+        const taxInput: TaxCalculationInput = {
+          grossPay,
+          payFrequency: defaultPayFrequency,
+          maritalStatus: defaultMaritalStatus,
+          exemptions: newData.exemptions || 0,
+          taxState: defaultTaxState,
+          ytdGrossPay: 0 // Force YTD to 0 to ensure SS tax calculates properly
+        }
+        
+        const taxResult = calculateTaxes(taxInput)
+        
+        // Update tax fields with calculated values (using defaults)
+        updates.medicare = taxResult.medicare + taxResult.additionalMedicare
+        updates.socialSecurity = taxResult.socialSecurity
+        updates.federalTax = taxResult.federalTax
+        updates.stateTax = taxResult.stateTax
+        updates.totalDeductions = taxResult.totalDeductions
+        updates.netPay = taxResult.netPay
+        
+        // Auto-calculate YTD values based on pay period number
+        const payPeriodNum = newData.payPeriodNumber || 1
+        updates.ytdGrossPay = calculateYTDTotal(grossPay, calculatePriorYTD(grossPay, payPeriodNum))
+        updates.ytdMedicare = calculateYTDTotal(updates.medicare, calculatePriorYTD(updates.medicare, payPeriodNum))
+        updates.ytdSocialSecurity = calculateYTDTotal(updates.socialSecurity, calculatePriorYTD(updates.socialSecurity, payPeriodNum))
+        updates.ytdFederalTax = calculateYTDTotal(updates.federalTax, calculatePriorYTD(updates.federalTax, payPeriodNum))
+        updates.ytdStateTax = calculateYTDTotal(updates.stateTax, calculatePriorYTD(updates.stateTax, payPeriodNum))
+        updates.ytdTotalDeductions = calculateYTDTotal(updates.totalDeductions, calculatePriorYTD(updates.totalDeductions, payPeriodNum))
+        updates.ytdNetPay = calculateYTDTotal(updates.netPay, calculatePriorYTD(updates.netPay, payPeriodNum))
+      } else {
+        // Manual calculation if no gross pay
+        const totalDeductions = (updates.medicare || data.medicare || 0) + 
+                               (updates.socialSecurity || data.socialSecurity || 0) + 
+                               (updates.federalTax || data.federalTax || 0) + 
+                               (updates.stateTax || data.stateTax || 0)
+        updates.totalDeductions = totalDeductions
+        updates.netPay = grossPay - totalDeductions
+      }
     }
     
     onUpdate(updates)
@@ -199,13 +330,23 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                   <SelectValue placeholder="1 paystub" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">1 paystub</SelectItem>
-                  <SelectItem value="2">2 paystubs</SelectItem>
-                  <SelectItem value="3">3 paystubs</SelectItem>
-                  <SelectItem value="6">6 paystubs</SelectItem>
-                  <SelectItem value="12">12 paystubs</SelectItem>
+                  {Array.from({ length: Math.min(getMaxPaystubs(data.payFrequency), 12) }, (_, i) => i + 1).map((num) => (
+                    <SelectItem key={num} value={num.toString()}>
+                      {num} paystub{num !== 1 ? 's' : ''}
+                    </SelectItem>
+                  ))}
+                  {getMaxPaystubs(data.payFrequency) > 12 && (
+                    <>
+                      <SelectItem value="24">24 paystubs</SelectItem>
+                      <SelectItem value="26">26 paystubs</SelectItem>
+                      <SelectItem value="52">52 paystubs</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
+              <div className="text-xs text-gray-500">
+                Max for {data.payFrequency || 'bi-weekly'}: {getMaxPaystubs(data.payFrequency)} paystubs/year
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -691,29 +832,31 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
         
         {/* Form Content */}
         <div className="bg-white p-6 rounded-b-lg border border-gray-200 border-t-0">
-          <div className="mb-4 text-sm text-teal-600">
-            * Indicates editable field. All other fields are auto-filled, please be cautious if overwriting.
-          </div>
-          
+        
           {/* Pay Period Section */}
           <div className="space-y-6 mb-8">
             {/* Pay period number */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-gray-700">Pay period number</Label>
               <Select
-                value={data.numberOfPaystubs.toString()}
-                onValueChange={(value) => handleInputChange("numberOfPaystubs", parseInt(value))}
+                value={(data.payPeriodNumber || 1).toString()}
+                onValueChange={(value) => handleInputChange("payPeriodNumber", parseInt(value))}
               >
                 <SelectTrigger className="w-48 border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent">
                   <SelectValue placeholder="" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">Pay period #1</SelectItem>
-                  <SelectItem value="2">Pay period #2</SelectItem>
-                  <SelectItem value="18">Pay period #18</SelectItem>
-                  <SelectItem value="24">Pay period #24</SelectItem>
+                  {Array.from({ length: getMaxPaystubs(data.payFrequency) }, (_, i) => i + 1).map((num) => (
+                    <SelectItem key={num} value={num.toString()}>
+                      Pay period #{num}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              <div className="text-xs text-gray-500 mt-1">
+                💡 <strong>Note:</strong> Pay Period #1 shows $0.00 Prior YTD (no previous periods). 
+                Select higher periods (e.g., #5, #10) to see Prior YTD calculations.
+              </div>
             </div>
 
             {/* Pay period and Pay date */}
@@ -836,20 +979,21 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                       })()}
                     </td>
                     <td className="p-4 border-r border-gray-200">
-                      <Input
-                        type="text"
-                        value={getDisplay('priorYtdGrossPay', String((data.ytdGrossPay - calculateGrossPay()) || ''))}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setDisplay('priorYtdGrossPay', v)
-                          handleInputChange("ytdGrossPay", toNumber(v) + calculateGrossPay())
-                        }}
-                        className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
-                      />
+                      <div className="text-center text-sm font-medium text-gray-700 bg-gray-50 py-2 px-3 rounded">
+                        {(() => {
+                          const currentGross = calculateGrossPay()
+                          const priorYTD = calculatePriorYTD(currentGross, data.payPeriodNumber || 1)
+                          return priorYTD.toFixed(2)
+                        })()}
+                        <div className="text-xs text-gray-500 mt-1">Auto-calculated</div>
+                      </div>
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
-                      {data.ytdGrossPay.toFixed(2)}
+                      {(() => {
+                        const currentGross = calculateGrossPay()
+                        const priorYTD = calculatePriorYTD(currentGross, data.payPeriodNumber || 1)
+                        return calculateYTDTotal(currentGross, priorYTD).toFixed(2)
+                      })()}
                     </td>
                   </tr>
                   <tr className="border-b border-gray-200">
@@ -887,22 +1031,20 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                       })()}
                     </td>
                     <td className="p-4 text-center text-sm border-r border-gray-200">
-                      <Input
-                        type="text"
-                        value={getDisplay('priorYtdOvertime', String((data.ytdOvertimePay || 0) || ''))}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setDisplay('priorYtdOvertime', v)
-                          handleInputChange("ytdOvertimePay", toNumber(v) + ((data.overtimeRate || 0) * (data.overtimeHours || 0)))
-                        }}
-                        className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
-                      />
+                      <div className="text-center text-sm font-medium text-gray-700 bg-gray-50 py-2 px-3 rounded">
+                        {(() => {
+                          const currentOvertime = (data.overtimeRate || 0) * (data.overtimeHours || 0)
+                          const priorYTD = calculatePriorYTD(currentOvertime, data.payPeriodNumber || 1)
+                          return priorYTD.toFixed(2)
+                        })()}
+                        <div className="text-xs text-gray-500 mt-1">Auto-calculated</div>
+                      </div>
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
                       {(() => {
-                        const result = (data.ytdOvertimePay || 0) + ((data.overtimeRate || 0) * (data.overtimeHours || 0));
-                        return result ? result.toFixed(2) : '';
+                        const currentOvertime = (data.overtimeRate || 0) * (data.overtimeHours || 0)
+                        const priorYTD = calculatePriorYTD(currentOvertime, data.payPeriodNumber || 1)
+                        return calculateYTDTotal(currentOvertime, priorYTD).toFixed(2)
                       })()}
                     </td>
                   </tr>
@@ -912,8 +1054,20 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 border-r border-gray-200"></td>
                     <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">GROSS PAY</td>
                     <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{calculateGrossPay() ? calculateGrossPay().toFixed(2) : ''}</td>
-                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{(data.ytdGrossPay - calculateGrossPay()) ? (data.ytdGrossPay - calculateGrossPay()).toFixed(2) : ''}</td>
-                    <td className="p-4 text-center text-sm font-semibold text-gray-700">{(calculateGrossPay() + (data.ytdGrossPay - calculateGrossPay())) ? (calculateGrossPay() + (data.ytdGrossPay - calculateGrossPay())).toFixed(2) : ''}</td>
+                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">
+                      {(() => {
+                        const currentGross = calculateGrossPay()
+                        const priorYTD = calculatePriorYTD(currentGross, data.payPeriodNumber || 1)
+                        return priorYTD.toFixed(2)
+                      })()}
+                    </td>
+                    <td className="p-4 text-center text-sm font-semibold text-gray-700">
+                      {(() => {
+                        const currentGross = calculateGrossPay()
+                        const priorYTD = calculatePriorYTD(currentGross, data.payPeriodNumber || 1)
+                        return calculateYTDTotal(currentGross, priorYTD).toFixed(2)
+                      })()}
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -934,143 +1088,143 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                   <tr className="border-b border-gray-200">
                     <td className="p-4 text-sm text-gray-700 border-r border-gray-200">FICA - Medicare</td>
                     <td className="p-4 border-r border-gray-200">
-                      <Input
-                        type="text"
-                        value={getDisplay('medicare', String(data.medicare || ''))}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setDisplay('medicare', v)
-                          handleInputChange("medicare", toNumber(v))
-                        }}
-                        className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
-                      />
+                      <div className="text-center text-sm font-medium text-gray-700 bg-gray-50 py-2 px-3 rounded">
+                        {data.medicare ? data.medicare.toFixed(2) : '0.00'}
+                        <div className="text-xs text-gray-500 mt-1">Auto-calculated</div>
+                      </div>
                     </td>
                     <td className="p-4 border-r border-gray-200">
-                      <Input
-                        type="text"
-                        value={getDisplay('priorYtdMedicare', String((data.ytdMedicare - (data.medicare || 0)) || ''))}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setDisplay('priorYtdMedicare', v)
-                          handleInputChange("ytdMedicare", toNumber(v) + (data.medicare || 0))
-                        }}
-                        className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
-                      />
+                      <div className="text-center text-sm font-medium text-gray-700 bg-gray-50 py-2 px-3 rounded">
+                        {(() => {
+                          const currentMedicare = data.medicare || 0
+                          const priorYTD = calculatePriorYTD(currentMedicare, data.payPeriodNumber || 1)
+                          return priorYTD.toFixed(2)
+                        })()}
+                        <div className="text-xs text-gray-500 mt-1">Auto-calculated</div>
+                      </div>
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
-                      {data.ytdMedicare.toFixed(2)}
+                      {(() => {
+                        const currentMedicare = data.medicare || 0
+                        const priorYTD = calculatePriorYTD(currentMedicare, data.payPeriodNumber || 1)
+                        return calculateYTDTotal(currentMedicare, priorYTD).toFixed(2)
+                      })()}
                     </td>
                   </tr>
                   <tr className="border-b border-gray-200">
                     <td className="p-4 text-sm text-gray-700 border-r border-gray-200">FICA - Social Security</td>
                     <td className="p-4 border-r border-gray-200">
-                      <Input
-                        type="text"
-                        value={getDisplay('socialSecurity', String(data.socialSecurity || ''))}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setDisplay('socialSecurity', v)
-                          handleInputChange("socialSecurity", toNumber(v))
-                        }}
-                        className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
-                      />
+                      <div className="text-center text-sm font-medium text-gray-700 bg-gray-50 py-2 px-3 rounded">
+                        {data.socialSecurity ? data.socialSecurity.toFixed(2) : '0.00'}
+                        <div className="text-xs text-gray-500 mt-1">Auto-calculated</div>
+                      </div>
                     </td>
                     <td className="p-4 border-r border-gray-200">
-                      <Input
-                        type="text"
-                        value={getDisplay('priorYtdSocialSecurity', String((data.ytdSocialSecurity - (data.socialSecurity || 0)) || ''))}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setDisplay('priorYtdSocialSecurity', v)
-                          handleInputChange("ytdSocialSecurity", toNumber(v) + (data.socialSecurity || 0))
-                        }}
-                        className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
-                      />
+                      <div className="text-center text-sm font-medium text-gray-700 bg-gray-50 py-2 px-3 rounded">
+                        {(() => {
+                          const currentSS = data.socialSecurity || 0
+                          const priorYTD = calculatePriorYTD(currentSS, data.payPeriodNumber || 1)
+                          return priorYTD.toFixed(2)
+                        })()}
+                        <div className="text-xs text-gray-500 mt-1">Auto-calculated</div>
+                      </div>
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
-                      {data.ytdSocialSecurity.toFixed(2)}
+                      {(() => {
+                        const currentSS = data.socialSecurity || 0
+                        const priorYTD = calculatePriorYTD(currentSS, data.payPeriodNumber || 1)
+                        return calculateYTDTotal(currentSS, priorYTD).toFixed(2)
+                      })()}
                     </td>
                   </tr>
                   <tr className="border-b border-gray-200">
                     <td className="p-4 text-sm text-gray-700 border-r border-gray-200">Federal Tax</td>
                     <td className="p-4 border-r border-gray-200">
-                      <Input
-                        type="text"
-                        value={getDisplay('federalTax', String(data.federalTax || ''))}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setDisplay('federalTax', v)
-                          handleInputChange("federalTax", toNumber(v))
-                        }}
-                        className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
-                      />
+                      <div className="text-center text-sm font-medium text-gray-700 bg-gray-50 py-2 px-3 rounded">
+                        {data.federalTax ? data.federalTax.toFixed(2) : '0.00'}
+                        <div className="text-xs text-gray-500 mt-1">Auto-calculated</div>
+                      </div>
                     </td>
                     <td className="p-4 border-r border-gray-200">
-                      <Input
-                        type="text"
-                        value={getDisplay('priorYtdFederalTax', String((data.ytdFederalTax - (data.federalTax || 0)) || ''))}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setDisplay('priorYtdFederalTax', v)
-                          handleInputChange("ytdFederalTax", toNumber(v) + (data.federalTax || 0))
-                        }}
-                        className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
-                      />
+                      <div className="text-center text-sm font-medium text-gray-700 bg-gray-50 py-2 px-3 rounded">
+                        {(() => {
+                          const currentFed = data.federalTax || 0
+                          const priorYTD = calculatePriorYTD(currentFed, data.payPeriodNumber || 1)
+                          return priorYTD.toFixed(2)
+                        })()}
+                        <div className="text-xs text-gray-500 mt-1">Auto-calculated</div>
+                      </div>
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
-                      {data.ytdFederalTax.toFixed(2)}
+                      {(() => {
+                        const currentFed = data.federalTax || 0
+                        const priorYTD = calculatePriorYTD(currentFed, data.payPeriodNumber || 1)
+                        return calculateYTDTotal(currentFed, priorYTD).toFixed(2)
+                      })()}
                     </td>
                   </tr>
                   <tr className="border-b border-gray-200">
                     <td className="p-4 text-sm text-gray-700 border-r border-gray-200">State Tax</td>
                     <td className="p-4 border-r border-gray-200">
-                      <Input
-                        type="text"
-                        value={getDisplay('stateTax', String(data.stateTax || ''))}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setDisplay('stateTax', v)
-                          handleInputChange("stateTax", toNumber(v))
-                        }}
-                        className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
-                      />
+                      <div className="text-center text-sm font-medium text-gray-700 bg-gray-50 py-2 px-3 rounded">
+                        {data.stateTax ? data.stateTax.toFixed(2) : '0.00'}
+                        <div className="text-xs text-gray-500 mt-1">Auto-calculated</div>
+                      </div>
                     </td>
                     <td className="p-4 border-r border-gray-200">
-                      <Input
-                        type="text"
-                        value={getDisplay('priorYtdStateTax', String((data.ytdStateTax - (data.stateTax || 0)) || ''))}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setDisplay('priorYtdStateTax', v)
-                          handleInputChange("ytdStateTax", toNumber(v) + (data.stateTax || 0))
-                        }}
-                        className="text-center border-b-2 border-teal-500 rounded-none border-t-0 border-l-0 border-r-0 bg-transparent text-sm"
-                        placeholder=""
-                      />
+                      <div className="text-center text-sm font-medium text-gray-700 bg-gray-50 py-2 px-3 rounded">
+                        {(() => {
+                          const currentState = data.stateTax || 0
+                          const priorYTD = calculatePriorYTD(currentState, data.payPeriodNumber || 1)
+                          return priorYTD.toFixed(2)
+                        })()}
+                        <div className="text-xs text-gray-500 mt-1">Auto-calculated</div>
+                      </div>
                     </td>
                     <td className="p-4 text-center text-sm font-medium">
-                      {data.ytdStateTax.toFixed(2)}
+                      {(() => {
+                        const currentState = data.stateTax || 0
+                        const priorYTD = calculatePriorYTD(currentState, data.payPeriodNumber || 1)
+                        return calculateYTDTotal(currentState, priorYTD).toFixed(2)
+                      })()}
                     </td>
                   </tr>
                  
                   <tr className="bg-gray-50">
                     <td className="p-4 text-sm font-semibold text-gray-700 border-r border-gray-200">Deduction Total</td>
                     <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{calculateTotalDeductions() ? calculateTotalDeductions().toFixed(2) : ''}</td>
-                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">{(data.ytdTotalDeductions - calculateTotalDeductions()) ? (data.ytdTotalDeductions - calculateTotalDeductions()).toFixed(2) : ''}</td>
-                    <td className="p-4 text-center text-sm font-semibold text-gray-700">{(calculateTotalDeductions() + (data.ytdTotalDeductions - calculateTotalDeductions())) ? (calculateTotalDeductions() + (data.ytdTotalDeductions - calculateTotalDeductions())).toFixed(2) : ''}</td>
+                    <td className="p-4 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">
+                      {(() => {
+                        const currentDeductions = calculateTotalDeductions()
+                        const priorYTD = calculatePriorYTD(currentDeductions, data.payPeriodNumber || 1)
+                        return priorYTD.toFixed(2)
+                      })()}
+                    </td>
+                    <td className="p-4 text-center text-sm font-semibold text-gray-700">
+                      {(() => {
+                        const currentDeductions = calculateTotalDeductions()
+                        const priorYTD = calculatePriorYTD(currentDeductions, data.payPeriodNumber || 1)
+                        return calculateYTDTotal(currentDeductions, priorYTD).toFixed(2)
+                      })()}
+                    </td>
                   </tr>
                   <tr className="bg-gray-100">
                     <td className="p-4 text-sm font-bold text-gray-700 border-r border-gray-200">Net Pay</td>
                     <td className="p-4 text-center text-sm font-bold text-gray-700 border-r border-gray-200">{calculateNetPay() ? calculateNetPay().toFixed(2) : ''}</td>
-                    <td className="p-4 text-center text-sm font-bold text-gray-700 border-r border-gray-200">{(data.ytdNetPay - calculateNetPay()) ? (data.ytdNetPay - calculateNetPay()).toFixed(2) : ''}</td>
-                    <td className="p-4 text-center text-sm font-bold text-gray-700">{(calculateNetPay() + (data.ytdNetPay - calculateNetPay())) ? (calculateNetPay() + (data.ytdNetPay - calculateNetPay())).toFixed(2) : ''}</td>
+                    <td className="p-4 text-center text-sm font-bold text-gray-700 border-r border-gray-200">
+                      {(() => {
+                        const currentNetPay = calculateNetPay()
+                        const priorYTD = calculatePriorYTD(currentNetPay, data.payPeriodNumber || 1)
+                        return priorYTD.toFixed(2)
+                      })()}
+                    </td>
+                    <td className="p-4 text-center text-sm font-bold text-gray-700">
+                      {(() => {
+                        const currentNetPay = calculateNetPay()
+                        const priorYTD = calculatePriorYTD(currentNetPay, data.payPeriodNumber || 1)
+                        return calculateYTDTotal(currentNetPay, priorYTD).toFixed(2)
+                      })()}
+                    </td>
                   </tr>
                 </tbody>
               </table>
