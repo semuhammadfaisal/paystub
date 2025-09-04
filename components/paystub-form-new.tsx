@@ -9,6 +9,7 @@ import { StepHeader } from "@/components/step-header"
 import type { PaystubData } from "@/components/paystub-generator"
 import { useState, useEffect } from "react"
 import { calculateTaxes, type TaxCalculationInput } from "@/lib/tax-calculator"
+import { TaxTooltip } from "@/components/tax-tooltip"
 
 interface PaystubFormProps {
   data: PaystubData
@@ -1086,7 +1087,10 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                 </thead>
                 <tbody>
                   <tr className="border-b border-gray-200">
-                    <td className="p-4 text-sm text-gray-700 border-r border-gray-200">FICA - Medicare</td>
+                    <td className="p-4 text-sm text-gray-700 border-r border-gray-200 flex items-center gap-2">
+                      FICA - Medicare
+                      <TaxTooltip type="medicare" maritalStatus={data.maritalStatus} />
+                    </td>
                     <td className="p-4 border-r border-gray-200">
                       <div className="text-center text-sm font-medium text-gray-700 bg-gray-50 py-2 px-3 rounded">
                         {data.medicare ? data.medicare.toFixed(2) : '0.00'}
@@ -1112,7 +1116,10 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     </td>
                   </tr>
                   <tr className="border-b border-gray-200">
-                    <td className="p-4 text-sm text-gray-700 border-r border-gray-200">FICA - Social Security</td>
+                    <td className="p-4 text-sm text-gray-700 border-r border-gray-200 flex items-center gap-2">
+                      FICA - Social Security
+                      <TaxTooltip type="socialSecurity" />
+                    </td>
                     <td className="p-4 border-r border-gray-200">
                       <div className="text-center text-sm font-medium text-gray-700 bg-gray-50 py-2 px-3 rounded">
                         {data.socialSecurity ? data.socialSecurity.toFixed(2) : '0.00'}
@@ -1138,7 +1145,10 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     </td>
                   </tr>
                   <tr className="border-b border-gray-200">
-                    <td className="p-4 text-sm text-gray-700 border-r border-gray-200">Federal Tax</td>
+                    <td className="p-4 text-sm text-gray-700 border-r border-gray-200 flex items-center gap-2">
+                      Federal Tax
+                      <TaxTooltip type="federal" maritalStatus={data.maritalStatus} />
+                    </td>
                     <td className="p-4 border-r border-gray-200">
                       <div className="text-center text-sm font-medium text-gray-700 bg-gray-50 py-2 px-3 rounded">
                         {data.federalTax ? data.federalTax.toFixed(2) : '0.00'}
@@ -1164,7 +1174,10 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     </td>
                   </tr>
                   <tr className="border-b border-gray-200">
-                    <td className="p-4 text-sm text-gray-700 border-r border-gray-200">State Tax</td>
+                    <td className="p-4 text-sm text-gray-700 border-r border-gray-200 flex items-center gap-2">
+                      State Tax
+                      <TaxTooltip type="state" stateCode={data.taxState} />
+                    </td>
                     <td className="p-4 border-r border-gray-200">
                       <div className="text-center text-sm font-medium text-gray-700 bg-gray-50 py-2 px-3 rounded">
                         {data.stateTax ? data.stateTax.toFixed(2) : '0.00'}
