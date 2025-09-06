@@ -18,39 +18,78 @@ interface PaystubFormProps {
 
 export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
   const [displayValues, setDisplayValues] = useState<Record<string, string>>({})
+  // Optional: lock effective tax rates based on a reference scenario (e.g., salary = 1,000,000)
+  const [lockedRates, setLockedRates] = useState<null | {
+    medicareRate: number
+    socialSecurityRate: number
+    federalRate: number
+    stateRate: number
+  }>(null)
 
   // Auto-calculate taxes when component loads or key data changes
   useEffect(() => {
+    // Ensure salary uses per-period amount, not annual
     const grossPay = data.payType === "hourly" 
       ? ((data.hourlyRate || 0) * (data.hoursWorked || 0)) + ((data.overtimeRate || 0) * (data.overtimeHours || 0))
-      : (data.salary || 0)
+      : (data.salary && data.numberOfPaystubs
+          ? data.salary / data.numberOfPaystubs
+          : (data.salary || 0))
     
     if (grossPay > 0) {
-      const taxInput: TaxCalculationInput = {
-        grossPay,
-        payFrequency: data.payFrequency || 'bi-weekly',
-        maritalStatus: data.maritalStatus || 'single', 
-        exemptions: data.exemptions || 0,
-        taxState: data.taxState || 'CA', // Default to California for testing
-        ytdGrossPay: 0 // Force YTD to 0 to ensure SS tax calculates properly
+      if (lockedRates) {
+        const medicare = grossPay * lockedRates.medicareRate
+        const socialSecurity = grossPay * lockedRates.socialSecurityRate
+        const federalTax = grossPay * lockedRates.federalRate
+        const stateTax = grossPay * lockedRates.stateRate
+        const totalDeductions = medicare + socialSecurity + federalTax + stateTax
+        const netPay = grossPay - totalDeductions
+        onUpdate({
+          medicare,
+          socialSecurity,
+          federalTax,
+          stateTax,
+          totalDeductions,
+          netPay,
+          grossPay
+        })
+      } else {
+        const taxInput: TaxCalculationInput = {
+          grossPay,
+          payFrequency: data.payFrequency || 'bi-weekly',
+          maritalStatus: data.maritalStatus || 'single', 
+          exemptions: data.exemptions || 0,
+          taxState: data.taxState || 'CA', // Default to California for testing
+          ytdGrossPay: 0 // Force YTD to 0 to ensure SS tax calculates properly
+        }
+        
+        console.log('Tax calculation input:', taxInput)
+        const taxResult = calculateTaxes(taxInput)
+        console.log('Tax calculation result:', taxResult)
+        
+        // Always update taxes to ensure they're calculated
+        onUpdate({
+          medicare: taxResult.medicare + taxResult.additionalMedicare,
+          socialSecurity: taxResult.socialSecurity,
+          federalTax: taxResult.federalTax,
+          stateTax: taxResult.stateTax,
+          totalDeductions: taxResult.totalDeductions,
+          netPay: taxResult.netPay,
+          grossPay
+        })
+
+        // If the user is using the 1,000,000 salary reference, capture effective rates for later use
+        if (data.payType === 'salary' && data.salary === 1_000_000 && data.numberOfPaystubs) {
+          const effectiveRates = {
+            medicareRate: (taxResult.medicare + taxResult.additionalMedicare) / grossPay,
+            socialSecurityRate: taxResult.socialSecurity / grossPay,
+            federalRate: taxResult.federalTax / grossPay,
+            stateRate: taxResult.stateTax / grossPay,
+          }
+          setLockedRates(effectiveRates)
+        }
       }
-      
-      console.log('Tax calculation input:', taxInput)
-      const taxResult = calculateTaxes(taxInput)
-      console.log('Tax calculation result:', taxResult)
-      
-      // Always update taxes to ensure they're calculated
-      onUpdate({
-        medicare: taxResult.medicare + taxResult.additionalMedicare,
-        socialSecurity: taxResult.socialSecurity,
-        federalTax: taxResult.federalTax,
-        stateTax: taxResult.stateTax,
-        totalDeductions: taxResult.totalDeductions,
-        netPay: taxResult.netPay,
-        grossPay
-      })
     }
-  }, [data.hourlyRate, data.hoursWorked, data.overtimeRate, data.overtimeHours, data.salary, data.payType, data.payFrequency, data.maritalStatus, data.exemptions, data.taxState, data.ytdGrossPay])
+  }, [data.hourlyRate, data.hoursWorked, data.overtimeRate, data.overtimeHours, data.salary, data.numberOfPaystubs, data.payType, data.payFrequency, data.maritalStatus, data.exemptions, data.taxState, data.ytdGrossPay])
 
   const setDisplay = (key: string, val: string) => {
     setDisplayValues((prev) => ({ ...prev, [key]: val }))
@@ -69,7 +108,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
   // Helper function to get maximum paystubs based on frequency
   const getMaxPaystubs = (frequency: string): number => {
     switch (frequency?.toLowerCase()) {
-      case 'daily': return 260 // 5 days/week * 52 weeks
+        case 'daily': return 52 // Daily paystubs numbered 1-52
       case 'weekly': return 52
       case 'bi-weekly': return 26
       case 'semi-monthly': return 24
@@ -81,103 +120,212 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
     }
   }
 
-  // Helper function to calculate Prior YTD from current pay period number
-  const calculatePriorYTD = (currentAmount: number, payPeriodNumber: number): number => {
-    // Prior YTD = (current period amount) × (pay period number - 1)
-    // This simulates accumulated earnings/deductions from previous pay periods
-    return currentAmount * Math.max(0, payPeriodNumber - 1)
+  // Helper function to calculate gross pay per period based on annual salary and total paystubs required
+  const calculateGrossPayPerPeriod = (annualSalary: number, numberOfPaystubs: number): number => {
+    if (numberOfPaystubs <= 0) return 0
+    return annualSalary / numberOfPaystubs
   }
 
-  // Helper function to calculate YTD Total
-  const calculateYTDTotal = (currentAmount: number, priorYTD: number): number => {
-    return currentAmount + priorYTD
+  // Helper function to calculate YTD Total based on pay period number
+  const calculateYTDTotal = (amountPerPeriod: number, payPeriodNumber: number): number => {
+    // YTD Total = per-period amount × pay period number
+    return amountPerPeriod * (payPeriodNumber || 1)
+  }
+
+  // Helper function to calculate Prior YTD based on pay period number
+  const calculatePriorYTD = (amountPerPeriod: number, payPeriodNumber: number): number => {
+    // Prior YTD = per-period amount × (pay period number - 1)
+    const periodsBeforeCurrent = Math.max(0, (payPeriodNumber || 1) - 1)
+    return amountPerPeriod * periodsBeforeCurrent
+  }
+
+  // Helper function to auto-determine pay period number based on pay date and frequency
+  const calculatePayPeriodNumber = (payDate: string, frequency: string): number => {
+    if (!payDate) return 1
+    
+    const date = new Date(payDate)
+    const year = date.getFullYear()
+    const month = date.getMonth() + 1 // 1-12
+    const dayOfMonth = date.getDate()
+    
+    switch (frequency?.toLowerCase()) {
+      case 'daily':
+        // For daily: approximate based on business days (5 days/week)
+        const weekOfYear = Math.ceil((date.getTime() - new Date(year, 0, 1).getTime()) / (1000 * 60 * 60 * 24 * 7))
+        return Math.min(weekOfYear, 52)
+      case 'weekly':
+        const weekNum = Math.ceil((date.getTime() - new Date(year, 0, 1).getTime()) / (1000 * 60 * 60 * 24 * 7))
+        return Math.min(weekNum, 52)
+      case 'bi-weekly':
+        // For bi-weekly: calculate based on which bi-weekly period in the year
+        const startOfYear = new Date(year, 0, 1)
+        const daysDiff = Math.floor((date.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24))
+        const biWeeklyPeriod = Math.ceil((daysDiff + 1) / 14)
+        return Math.min(biWeeklyPeriod, 26)
+      case 'semi-monthly':
+        // Two periods per month: 1st-15th and 16th-end
+        return (month - 1) * 2 + (dayOfMonth <= 15 ? 1 : 2)
+      case 'monthly':
+        return month
+      case 'quarterly':
+        return Math.ceil(month / 3)
+      case 'semi-annually':
+        return month <= 6 ? 1 : 2
+      case 'annually':
+        return 1
+      default:
+        return 1
+    }
   }
 
   const handleInputChange = (field: keyof PaystubData, value: string | number | boolean) => {
     const updates: Partial<PaystubData> = { [field]: value }
     
-    // Trigger recalculation when key fields change (including payPeriodNumber)
+    // Auto-sync all state fields when tax state is changed
+    if (field === 'taxState' && typeof value === 'string') {
+      updates.companyState = value
+      updates.employeeState = value
+    }
+    
+    // Auto-calculate pay period number when pay date or frequency changes
+    if ((field === 'payDate' || field === 'payFrequency') && data.payDate && data.payFrequency) {
+      const payDate = field === 'payDate' ? value as string : data.payDate
+      const frequency = field === 'payFrequency' ? value as string : data.payFrequency
+      updates.payPeriodNumber = calculatePayPeriodNumber(payDate, frequency)
+    }
+    
+    // Trigger recalculation when key fields change
     if (field === 'hourlyRate' || field === 'hoursWorked' || field === 'overtimeRate' || field === 'overtimeHours' || 
-        field === 'salary' || field === 'payType' || field === 'payFrequency' || field === 'maritalStatus' || field === 'exemptions' || field === 'taxState' || field === 'payPeriodNumber') {
+        field === 'salary' || field === 'payType' || field === 'payFrequency' || field === 'maritalStatus' || field === 'exemptions' || field === 'taxState' || field === 'payPeriodNumber' || field === 'payDate' || field === 'numberOfPaystubs') {
       
       // Calculate with the new value
-      const newData = { ...data, [field]: value }
+      const newData = { ...data, ...updates }
       
-      // Calculate gross pay
+      // Calculate gross pay per period
       let grossPay = 0
-      if (newData.payType === "hourly") {
+      if (newData.payType === "salary" && newData.salary && newData.numberOfPaystubs) {
+        // For salary: calculate per-period amount based on annual salary and total paystubs required
+        grossPay = calculateGrossPayPerPeriod(newData.salary, newData.numberOfPaystubs)
+      } else if (newData.payType === "hourly") {
+        // For hourly: use traditional calculation
         const regularPay = (newData.hourlyRate || 0) * (newData.hoursWorked || 0)
         const overtimePay = (newData.overtimeRate || 0) * (newData.overtimeHours || 0)
         grossPay = regularPay + overtimePay
-      } else {
-        grossPay = newData.salary || 0
       }
       updates.grossPay = grossPay
       
       // Auto-calculate taxes if we have sufficient data
       if (grossPay > 0 && newData.payFrequency && newData.maritalStatus && newData.taxState) {
-        const taxInput: TaxCalculationInput = {
-          grossPay,
-          payFrequency: newData.payFrequency,
-          maritalStatus: newData.maritalStatus,
-          exemptions: newData.exemptions || 0,
-          taxState: newData.taxState,
-          ytdGrossPay: newData.ytdGrossPay || 0
+        if (lockedRates) {
+          updates.medicare = grossPay * lockedRates.medicareRate
+          updates.socialSecurity = grossPay * lockedRates.socialSecurityRate
+          updates.federalTax = grossPay * lockedRates.federalRate
+          updates.stateTax = grossPay * lockedRates.stateRate
+          updates.totalDeductions = (updates.medicare || 0) + (updates.socialSecurity || 0) + (updates.federalTax || 0) + (updates.stateTax || 0)
+          updates.netPay = grossPay - (updates.totalDeductions || 0)
+        } else {
+          const taxInput: TaxCalculationInput = {
+            grossPay,
+            payFrequency: newData.payFrequency,
+            maritalStatus: newData.maritalStatus,
+            exemptions: newData.exemptions || 0,
+            taxState: newData.taxState,
+            ytdGrossPay: newData.ytdGrossPay || 0
+          }
+          
+          const taxResult = calculateTaxes(taxInput)
+          
+          // Update tax fields with calculated values
+          updates.medicare = taxResult.medicare + taxResult.additionalMedicare
+          updates.socialSecurity = taxResult.socialSecurity
+          updates.federalTax = taxResult.federalTax
+          updates.stateTax = taxResult.stateTax
+          updates.totalDeductions = taxResult.totalDeductions
+          updates.netPay = taxResult.netPay
+
+          // Capture effective rates when the reference salary is used
+          if (newData.payType === 'salary' && newData.salary === 1_000_000 && newData.numberOfPaystubs) {
+            setLockedRates({
+              medicareRate: (updates.medicare || 0) / grossPay,
+              socialSecurityRate: (updates.socialSecurity || 0) / grossPay,
+              federalRate: (updates.federalTax || 0) / grossPay,
+              stateRate: (updates.stateTax || 0) / grossPay,
+            })
+          }
         }
-        
-        const taxResult = calculateTaxes(taxInput)
-        
-        // Update tax fields with calculated values
-        updates.medicare = taxResult.medicare + taxResult.additionalMedicare
-        updates.socialSecurity = taxResult.socialSecurity
-        updates.federalTax = taxResult.federalTax
-        updates.stateTax = taxResult.stateTax
-        updates.totalDeductions = taxResult.totalDeductions
-        updates.netPay = taxResult.netPay
         
         // Auto-calculate YTD values based on pay period number
         const payPeriodNum = newData.payPeriodNumber || 1
-        updates.ytdGrossPay = calculateYTDTotal(grossPay, calculatePriorYTD(grossPay, payPeriodNum))
-        updates.ytdMedicare = calculateYTDTotal(updates.medicare, calculatePriorYTD(updates.medicare, payPeriodNum))
-        updates.ytdSocialSecurity = calculateYTDTotal(updates.socialSecurity, calculatePriorYTD(updates.socialSecurity, payPeriodNum))
-        updates.ytdFederalTax = calculateYTDTotal(updates.federalTax, calculatePriorYTD(updates.federalTax, payPeriodNum))
-        updates.ytdStateTax = calculateYTDTotal(updates.stateTax, calculatePriorYTD(updates.stateTax, payPeriodNum))
-        updates.ytdTotalDeductions = calculateYTDTotal(updates.totalDeductions, calculatePriorYTD(updates.totalDeductions, payPeriodNum))
-        updates.ytdNetPay = calculateYTDTotal(updates.netPay, calculatePriorYTD(updates.netPay, payPeriodNum))
+        // Calculate YTD totals: (amount per period) × (pay period number)
+        // Debug: Log values to identify the issue
+        // Fix: Use the displayed gross pay value for YTD calculations
+        const displayedGrossPay = newData.grossPay || grossPay
+        console.log('YTD Debug - grossPay:', grossPay, 'displayedGrossPay:', displayedGrossPay, 'payPeriodNum:', payPeriodNum)
+        updates.ytdGrossPay = calculateYTDTotal(displayedGrossPay, payPeriodNum)
+        updates.ytdMedicare = calculateYTDTotal(updates.medicare, payPeriodNum)
+        updates.ytdSocialSecurity = calculateYTDTotal(updates.socialSecurity, payPeriodNum)
+        updates.ytdFederalTax = calculateYTDTotal(updates.federalTax, payPeriodNum)
+        updates.ytdStateTax = calculateYTDTotal(updates.stateTax, payPeriodNum)
+        updates.ytdTotalDeductions = calculateYTDTotal(updates.totalDeductions, payPeriodNum)
+        updates.ytdNetPay = calculateYTDTotal(updates.netPay, payPeriodNum)
       } else if (grossPay > 0) {
         // Simplified auto-calculation with defaults if some fields missing
         const defaultPayFrequency = newData.payFrequency || 'bi-weekly'
         const defaultMaritalStatus = newData.maritalStatus || 'single'
         const defaultTaxState = newData.taxState || 'CA' // Default to California
         
-        const taxInput: TaxCalculationInput = {
-          grossPay,
-          payFrequency: defaultPayFrequency,
-          maritalStatus: defaultMaritalStatus,
-          exemptions: newData.exemptions || 0,
-          taxState: defaultTaxState,
-          ytdGrossPay: 0 // Force YTD to 0 to ensure SS tax calculates properly
+        if (lockedRates) {
+          updates.medicare = grossPay * lockedRates.medicareRate
+          updates.socialSecurity = grossPay * lockedRates.socialSecurityRate
+          updates.federalTax = grossPay * lockedRates.federalRate
+          updates.stateTax = grossPay * lockedRates.stateRate
+          updates.totalDeductions = (updates.medicare || 0) + (updates.socialSecurity || 0) + (updates.federalTax || 0) + (updates.stateTax || 0)
+          updates.netPay = grossPay - (updates.totalDeductions || 0)
+        } else {
+          const taxInput: TaxCalculationInput = {
+            grossPay,
+            payFrequency: defaultPayFrequency,
+            maritalStatus: defaultMaritalStatus,
+            exemptions: newData.exemptions || 0,
+            taxState: defaultTaxState,
+            ytdGrossPay: 0 // Force YTD to 0 to ensure SS tax calculates properly
+          }
+          
+          const taxResult = calculateTaxes(taxInput)
+          
+          // Update tax fields with calculated values (using defaults)
+          updates.medicare = taxResult.medicare + taxResult.additionalMedicare
+          updates.socialSecurity = taxResult.socialSecurity
+          updates.federalTax = taxResult.federalTax
+          updates.stateTax = taxResult.stateTax
+          updates.totalDeductions = taxResult.totalDeductions
+          updates.netPay = taxResult.netPay
+
+          // Capture effective rates when the reference salary is used
+          if (newData.payType === 'salary' && newData.salary === 1_000_000 && newData.numberOfPaystubs) {
+            setLockedRates({
+              medicareRate: (updates.medicare || 0) / grossPay,
+              socialSecurityRate: (updates.socialSecurity || 0) / grossPay,
+              federalRate: (updates.federalTax || 0) / grossPay,
+              stateRate: (updates.stateTax || 0) / grossPay,
+            })
+          }
         }
-        
-        const taxResult = calculateTaxes(taxInput)
-        
-        // Update tax fields with calculated values (using defaults)
-        updates.medicare = taxResult.medicare + taxResult.additionalMedicare
-        updates.socialSecurity = taxResult.socialSecurity
-        updates.federalTax = taxResult.federalTax
-        updates.stateTax = taxResult.stateTax
-        updates.totalDeductions = taxResult.totalDeductions
-        updates.netPay = taxResult.netPay
         
         // Auto-calculate YTD values based on pay period number
         const payPeriodNum = newData.payPeriodNumber || 1
-        updates.ytdGrossPay = calculateYTDTotal(grossPay, calculatePriorYTD(grossPay, payPeriodNum))
-        updates.ytdMedicare = calculateYTDTotal(updates.medicare, calculatePriorYTD(updates.medicare, payPeriodNum))
-        updates.ytdSocialSecurity = calculateYTDTotal(updates.socialSecurity, calculatePriorYTD(updates.socialSecurity, payPeriodNum))
-        updates.ytdFederalTax = calculateYTDTotal(updates.federalTax, calculatePriorYTD(updates.federalTax, payPeriodNum))
-        updates.ytdStateTax = calculateYTDTotal(updates.stateTax, calculatePriorYTD(updates.stateTax, payPeriodNum))
-        updates.ytdTotalDeductions = calculateYTDTotal(updates.totalDeductions, calculatePriorYTD(updates.totalDeductions, payPeriodNum))
-        updates.ytdNetPay = calculateYTDTotal(updates.netPay, calculatePriorYTD(updates.netPay, payPeriodNum))
+        // Calculate YTD totals: (amount per period) × (pay period number)
+        // Debug: Log values to identify the issue
+        // Fix: Use the displayed gross pay value for YTD calculations
+        const displayedGrossPay = newData.grossPay || grossPay
+        console.log('YTD Debug - grossPay:', grossPay, 'displayedGrossPay:', displayedGrossPay, 'payPeriodNum:', payPeriodNum)
+        updates.ytdGrossPay = calculateYTDTotal(displayedGrossPay, payPeriodNum)
+        updates.ytdMedicare = calculateYTDTotal(updates.medicare, payPeriodNum)
+        updates.ytdSocialSecurity = calculateYTDTotal(updates.socialSecurity, payPeriodNum)
+        updates.ytdFederalTax = calculateYTDTotal(updates.federalTax, payPeriodNum)
+        updates.ytdStateTax = calculateYTDTotal(updates.stateTax, payPeriodNum)
+        updates.ytdTotalDeductions = calculateYTDTotal(updates.totalDeductions, payPeriodNum)
+        updates.ytdNetPay = calculateYTDTotal(updates.netPay, payPeriodNum)
       } else {
         // Manual calculation if no gross pay
         const totalDeductions = (updates.medicare || data.medicare || 0) + 
@@ -198,6 +346,8 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
       const regularPay = (data.hourlyRate || 0) * (data.hoursWorked || 0)
       const overtimePay = (data.overtimeRate || 0) * (data.overtimeHours || 0)
       return regularPay + overtimePay
+    } else if (data.payType === "salary" && data.salary && data.numberOfPaystubs) {
+      return calculateGrossPayPerPeriod(data.salary, data.numberOfPaystubs)
     } else {
       return data.salary || 0
     }
@@ -244,13 +394,13 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                   value="hourly" 
                   className="flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary border-primary text-primary hover:bg-primary/10"
                 >
-                  ✓ HOURLY
+                  {data.payType === "hourly" ? "✓ " : ""}HOURLY
                 </ToggleGroupItem>
                 <ToggleGroupItem 
                   value="salary" 
                   className="flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary border-primary text-primary hover:bg-primary/10"
                 >
-                  SALARY
+                  {data.payType === "salary" ? "✓ " : ""}SALARY
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
@@ -272,13 +422,13 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                   value="employee" 
                   className="flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary border-primary text-primary hover:bg-primary/10"
                 >
-                  ✓ EMPLOYEE
+                  {data.employmentType === "employee" ? "✓ " : ""}EMPLOYEE
                 </ToggleGroupItem>
                 <ToggleGroupItem 
                   value="contractor" 
                   className="flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary border-primary text-primary hover:bg-primary/10"
                 >
-                  CONTRACTOR
+                  {data.employmentType === "contractor" ? "✓ " : ""}CONTRACTOR
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
@@ -331,18 +481,11 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                   <SelectValue placeholder="1 paystub" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: Math.min(getMaxPaystubs(data.payFrequency), 12) }, (_, i) => i + 1).map((num) => (
+                  {Array.from({ length: getMaxPaystubs(data.payFrequency) }, (_, i) => i + 1).map((num) => (
                     <SelectItem key={num} value={num.toString()}>
                       {num} paystub{num !== 1 ? 's' : ''}
                     </SelectItem>
                   ))}
-                  {getMaxPaystubs(data.payFrequency) > 12 && (
-                    <>
-                      <SelectItem value="24">24 paystubs</SelectItem>
-                      <SelectItem value="26">26 paystubs</SelectItem>
-                      <SelectItem value="52">52 paystubs</SelectItem>
-                    </>
-                  )}
                 </SelectContent>
               </Select>
               <div className="text-xs text-gray-500">
@@ -972,7 +1115,8 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-center text-sm font-medium border-r border-gray-200">
                       {(() => {
                         if (data.payType === "salary") {
-                          return data.salary ? data.salary.toFixed(2) : '';
+                          const perPeriod = calculateGrossPay();
+                          return perPeriod ? perPeriod.toFixed(2) : '';
                         } else {
                           const result = (data.hourlyRate || 0) * (data.hoursWorked || 0);
                           return result ? result.toFixed(2) : '';
@@ -992,8 +1136,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-center text-sm font-medium">
                       {(() => {
                         const currentGross = calculateGrossPay()
-                        const priorYTD = calculatePriorYTD(currentGross, data.payPeriodNumber || 1)
-                        return calculateYTDTotal(currentGross, priorYTD).toFixed(2)
+                        return calculateYTDTotal(currentGross, data.payPeriodNumber || 1).toFixed(2)
                       })()}
                     </td>
                   </tr>
@@ -1044,8 +1187,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-center text-sm font-medium">
                       {(() => {
                         const currentOvertime = (data.overtimeRate || 0) * (data.overtimeHours || 0)
-                        const priorYTD = calculatePriorYTD(currentOvertime, data.payPeriodNumber || 1)
-                        return calculateYTDTotal(currentOvertime, priorYTD).toFixed(2)
+                        return calculateYTDTotal(currentOvertime, data.payPeriodNumber || 1).toFixed(2)
                       })()}
                     </td>
                   </tr>
@@ -1065,8 +1207,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-center text-sm font-semibold text-gray-700">
                       {(() => {
                         const currentGross = calculateGrossPay()
-                        const priorYTD = calculatePriorYTD(currentGross, data.payPeriodNumber || 1)
-                        return calculateYTDTotal(currentGross, priorYTD).toFixed(2)
+                        return calculateYTDTotal(currentGross, data.payPeriodNumber || 1).toFixed(2)
                       })()}
                     </td>
                   </tr>
@@ -1110,8 +1251,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-center text-sm font-medium">
                       {(() => {
                         const currentMedicare = data.medicare || 0
-                        const priorYTD = calculatePriorYTD(currentMedicare, data.payPeriodNumber || 1)
-                        return calculateYTDTotal(currentMedicare, priorYTD).toFixed(2)
+                        return calculateYTDTotal(currentMedicare, data.payPeriodNumber || 1).toFixed(2)
                       })()}
                     </td>
                   </tr>
@@ -1139,8 +1279,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-center text-sm font-medium">
                       {(() => {
                         const currentSS = data.socialSecurity || 0
-                        const priorYTD = calculatePriorYTD(currentSS, data.payPeriodNumber || 1)
-                        return calculateYTDTotal(currentSS, priorYTD).toFixed(2)
+                        return calculateYTDTotal(currentSS, data.payPeriodNumber || 1).toFixed(2)
                       })()}
                     </td>
                   </tr>
@@ -1168,8 +1307,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-center text-sm font-medium">
                       {(() => {
                         const currentFed = data.federalTax || 0
-                        const priorYTD = calculatePriorYTD(currentFed, data.payPeriodNumber || 1)
-                        return calculateYTDTotal(currentFed, priorYTD).toFixed(2)
+                        return calculateYTDTotal(currentFed, data.payPeriodNumber || 1).toFixed(2)
                       })()}
                     </td>
                   </tr>
@@ -1197,8 +1335,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-center text-sm font-medium">
                       {(() => {
                         const currentState = data.stateTax || 0
-                        const priorYTD = calculatePriorYTD(currentState, data.payPeriodNumber || 1)
-                        return calculateYTDTotal(currentState, priorYTD).toFixed(2)
+                        return calculateYTDTotal(currentState, data.payPeriodNumber || 1).toFixed(2)
                       })()}
                     </td>
                   </tr>
@@ -1216,8 +1353,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-center text-sm font-semibold text-gray-700">
                       {(() => {
                         const currentDeductions = calculateTotalDeductions()
-                        const priorYTD = calculatePriorYTD(currentDeductions, data.payPeriodNumber || 1)
-                        return calculateYTDTotal(currentDeductions, priorYTD).toFixed(2)
+                        return calculateYTDTotal(currentDeductions, data.payPeriodNumber || 1).toFixed(2)
                       })()}
                     </td>
                   </tr>
@@ -1234,8 +1370,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     <td className="p-4 text-center text-sm font-bold text-gray-700">
                       {(() => {
                         const currentNetPay = calculateNetPay()
-                        const priorYTD = calculatePriorYTD(currentNetPay, data.payPeriodNumber || 1)
-                        return calculateYTDTotal(currentNetPay, priorYTD).toFixed(2)
+                        return calculateYTDTotal(currentNetPay, data.payPeriodNumber || 1).toFixed(2)
                       })()}
                     </td>
                   </tr>
