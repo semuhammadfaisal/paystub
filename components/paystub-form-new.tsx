@@ -119,15 +119,15 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
   // Helper function to get maximum paystubs based on frequency
   const getMaxPaystubs = (frequency: string): number => {
     switch ((frequency || 'bi-weekly')?.toLowerCase()) {
-      case 'daily': return 366 // Allow for leap years
-      case 'weekly': return 53 // Some years have 53 weeks depending on start day
-      case 'bi-weekly': return 27 // Occasionally 27 bi-weekly periods fall in a year
+      case 'daily': return 52
+      case 'weekly': return 52
+      case 'bi-weekly': return 26
       case 'semi-monthly': return 24
       case 'monthly': return 12
       case 'quarterly': return 4
       case 'semi-annually': return 2
       case 'annually': return 1
-      default: return 27 // Default aligned with bi-weekly cap
+      default: return 26 // Default aligned with bi-weekly cap
     }
   }
 
@@ -174,15 +174,15 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
     const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n))
     const periodsCapByFrequency = (freq: string) => {
       switch (freq.toLowerCase()) {
-        case 'daily': return daysInYear
-        case 'weekly': return 53 // some years can have 53 weeks depending on start day
-        case 'bi-weekly': return 27 // some years can have a 27th partial bi-weekly period
+        case 'daily': return 52
+        case 'weekly': return 52
+        case 'bi-weekly': return 26
         case 'semi-monthly': return 24
         case 'monthly': return 12
         case 'quarterly': return 4
         case 'semi-annually': return 2
         case 'annually': return 1
-        default: return 27
+        default: return 26
       }
     }
     
