@@ -25,6 +25,18 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
     stateRate: number
   }>(null)
 
+  // Keep pay period number in sync with dates/frequency
+  useEffect(() => {
+    const freq = data.payFrequency || 'bi-weekly'
+    const referenceDate = data.payPeriodEnd || data.payDate || data.payPeriodStart
+    if (referenceDate && freq) {
+      const computed = calculatePayPeriodNumber(referenceDate, freq)
+      if (computed !== (data.payPeriodNumber || 1)) {
+        onUpdate({ payPeriodNumber: computed })
+      }
+    }
+  }, [data.payPeriodEnd, data.payDate, data.payPeriodStart, data.payFrequency])
+
   // Auto-calculate taxes when component loads or key data changes
   useEffect(() => {
     // Ensure salary uses per-period amount, not annual
@@ -107,15 +119,15 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
   // Helper function to get maximum paystubs based on frequency
   const getMaxPaystubs = (frequency: string): number => {
     switch ((frequency || 'bi-weekly')?.toLowerCase()) {
-        case 'daily': return 52 // Daily paystubs numbered 1-52
-      case 'weekly': return 52
-      case 'bi-weekly': return 26
+      case 'daily': return 366 // Allow for leap years
+      case 'weekly': return 53 // Some years have 53 weeks depending on start day
+      case 'bi-weekly': return 27 // Occasionally 27 bi-weekly periods fall in a year
       case 'semi-monthly': return 24
       case 'monthly': return 12
       case 'quarterly': return 4
       case 'semi-annually': return 2
       case 'annually': return 1
-      default: return 26 // Default to bi-weekly
+      default: return 27 // Default aligned with bi-weekly cap
     }
   }
 
@@ -138,7 +150,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
     return amountPerPeriod * periodsBeforeCurrent
   }
 
-  // Helper function to auto-determine pay period number based on month using a year split
+  // Helper function to auto-determine pay period number anchored to Jan 1
   // Preference order for reference date: payPeriodEnd -> payDate -> payPeriodStart
   const calculatePayPeriodNumber = (referenceDate: string, frequency: string): number => {
     if (!referenceDate) return 1
@@ -155,29 +167,35 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
     const month = date.getMonth() + 1 // 1-12
     const dayOfMonth = date.getDate()
     const startOfYear = new Date(year, 0, 1)
-    const dayOfYear = Math.floor((date.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24)) + 1
+    // Days since Jan 1, zero-based (Jan 1 -> 0). Using exact intervals anchored at Jan 1.
+    const diffDaysZeroBased = Math.floor((date.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24))
     const isLeap = (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0))
     const daysInYear = isLeap ? 366 : 365
     const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n))
+    const periodsCapByFrequency = (freq: string) => {
+      switch (freq.toLowerCase()) {
+        case 'daily': return daysInYear
+        case 'weekly': return 53 // some years can have 53 weeks depending on start day
+        case 'bi-weekly': return 27 // some years can have a 27th partial bi-weekly period
+        case 'semi-monthly': return 24
+        case 'monthly': return 12
+        case 'quarterly': return 4
+        case 'semi-annually': return 2
+        case 'annually': return 1
+        default: return 27
+      }
+    }
     
     switch (frequency?.toLowerCase()) {
-      case 'daily': {
-        // Approximate 260 business days/year
-        const periodsPerYear = 260
-        const periodLength = daysInYear / periodsPerYear
-        return clamp(Math.ceil(dayOfYear / periodLength), 1, periodsPerYear)
-      }
-      case 'weekly': {
-        const periodsPerYear = 52
-        const periodLength = daysInYear / periodsPerYear
-        return clamp(Math.ceil(dayOfYear / periodLength), 1, periodsPerYear)
-      }
-      case 'bi-weekly': {
-        // Divide the year into 26 periods; using year-based division makes period number change with month
-        const periodsPerYear = 26
-        const periodLength = daysInYear / periodsPerYear
-        return clamp(Math.ceil(dayOfYear / periodLength), 1, periodsPerYear)
-      }
+      case 'daily':
+        // Jan 1 -> period #1, Jan 2 -> #2, etc.
+        return clamp(diffDaysZeroBased + 1, 1, periodsCapByFrequency('daily'))
+      case 'weekly':
+        // Each 7-day block from Jan 1
+        return clamp(Math.floor(diffDaysZeroBased / 7) + 1, 1, periodsCapByFrequency('weekly'))
+      case 'bi-weekly':
+        // Each 14-day block from Jan 1
+        return clamp(Math.floor(diffDaysZeroBased / 14) + 1, 1, periodsCapByFrequency('bi-weekly'))
       case 'semi-monthly':
         // Two periods per month: 1st-15th and 16th-end
         return (month - 1) * 2 + (dayOfMonth <= 15 ? 1 : 2)
@@ -190,10 +208,8 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
       case 'annually':
         return 1
       default: {
-        // Default to bi-weekly logic
-        const periodsPerYear = 26
-        const periodLength = daysInYear / periodsPerYear
-        return clamp(Math.ceil(dayOfYear / periodLength), 1, periodsPerYear)
+        // Default to bi-weekly logic anchored at Jan 1
+        return clamp(Math.floor(diffDaysZeroBased / 14) + 1, 1, periodsCapByFrequency('bi-weekly'))
       }
     }
   }
@@ -213,6 +229,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
       const payPeriodStartVal = field === 'payPeriodStart' ? (value as string) : data.payPeriodStart
       const payPeriodEndVal = field === 'payPeriodEnd' ? (value as string) : data.payPeriodEnd
       const frequencyVal = (field === 'payFrequency' ? (value as string) : data.payFrequency) || 'bi-weekly'
+      // Prefer END/Pay Date so 14-day periods align with common payroll practice
       const referenceDate = payPeriodEndVal || payDateVal || payPeriodStartVal
       if (referenceDate && frequencyVal) {
         updates.payPeriodNumber = calculatePayPeriodNumber(referenceDate, frequencyVal)
