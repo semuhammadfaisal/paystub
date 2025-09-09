@@ -134,7 +134,7 @@ const initialData: PaystubData = {
   paymentType: "",
   employmentType: "",
   email: "",
-  numberOfPaystubs: 1,
+  numberOfPaystubs: 26,
   taxState: "",
   companyName: "",
   companyAddress: "",

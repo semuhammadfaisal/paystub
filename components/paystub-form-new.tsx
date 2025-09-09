@@ -248,6 +248,11 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
         updates.payPeriodNumber = calculatePayPeriodNumber(referenceDate, frequencyVal)
       }
     }
+
+    // When pay frequency changes, automatically set numberOfPaystubs to the max for that frequency
+    if (field === 'payFrequency' && typeof value === 'string') {
+      updates.numberOfPaystubs = getMaxPaystubs(value)
+    }
     
     // Trigger recalculation when key fields change
     if (field === 'hourlyRate' || field === 'hoursWorked' || field === 'overtimeRate' || field === 'overtimeHours' || 
