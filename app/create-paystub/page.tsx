@@ -9,7 +9,7 @@ import Link from "next/link"
 export default async function CreatePaystubPage({
   searchParams,
 }: {
-  searchParams: { template?: string }
+  searchParams: Promise<{ template?: string }>
 }) {
   const supabase = createClient()
   const {
@@ -19,6 +19,9 @@ export default async function CreatePaystubPage({
   if (!user) {
     redirect("/login")
   }
+
+  // Await Next.js dynamic searchParams API before using its properties
+  const { template } = await searchParams
 
   return (
     <div className="min-h-screen bg-background">
@@ -64,7 +67,7 @@ export default async function CreatePaystubPage({
           </div>
         </section>
 
-        <PaystubGenerator user={user} initialTemplateId={typeof searchParams?.template === 'string' ? searchParams.template : undefined} />
+        <PaystubGenerator user={user} initialTemplateId={typeof template === 'string' ? template : undefined} />
 
         {/* WhatsApp CTA section */}
         <section className="mt-12">
