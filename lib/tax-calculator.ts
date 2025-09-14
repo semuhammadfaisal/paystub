@@ -41,58 +41,63 @@ const FEDERAL_TAX_BRACKETS_MARRIED = [
   { min: 693750, max: Infinity, rate: 0.37 }
 ]
 
-// State tax rates (simplified - flat rates for states with income tax)
+// State tax rates aligned to the provided reference.
+// Notes:
+// - Flat/no-tax states use the exact rates listed.
+// - Progressive/bracketed states use a simplified effective rate approximation
+//   around the middle of the stated range for per-paycheck estimation.
+// - Local/city/county taxes and SDI/TDI are NOT included here (handled elsewhere if needed).
 const STATE_TAX_RATES: Record<string, number> = {
-  'AL': 0.05, // Alabama - simplified average
-  'AK': 0.00, // Alaska - no state income tax
-  'AZ': 0.045, // Arizona - simplified average
-  'AR': 0.055, // Arkansas - simplified average
-  'CA': 0.08, // California - simplified average (varies widely)
-  'CO': 0.0455, // Colorado - flat rate
-  'CT': 0.06, // Connecticut - simplified average
-  'DE': 0.055, // Delaware - simplified average
-  'FL': 0.00, // Florida - no state income tax
-  'GA': 0.055, // Georgia - simplified average
-  'HI': 0.075, // Hawaii - simplified average
-  'ID': 0.055, // Idaho - simplified average
-  'IL': 0.0495, // Illinois - flat rate
-  'IN': 0.0323, // Indiana - flat rate
-  'IA': 0.065, // Iowa - simplified average
-  'KS': 0.055, // Kansas - simplified average
-  'KY': 0.05, // Kentucky - flat rate
-  'LA': 0.045, // Louisiana - simplified average
-  'ME': 0.075, // Maine - simplified average
-  'MD': 0.055, // Maryland - simplified average
-  'MA': 0.05, // Massachusetts - flat rate
-  'MI': 0.0425, // Michigan - flat rate
-  'MN': 0.075, // Minnesota - simplified average
-  'MS': 0.05, // Mississippi - simplified average
-  'MO': 0.055, // Missouri - simplified average
-  'MT': 0.065, // Montana - simplified average
-  'NE': 0.065, // Nebraska - simplified average
-  'NV': 0.00, // Nevada - no state income tax
-  'NH': 0.00, // New Hampshire - no state income tax (except dividends/interest)
-  'NJ': 0.065, // New Jersey - simplified average
-  'NM': 0.055, // New Mexico - simplified average
-  'NY': 0.065, // New York - simplified average
-  'NC': 0.0525, // North Carolina - flat rate
-  'ND': 0.045, // North Dakota - simplified average
-  'OH': 0.045, // Ohio - simplified average
-  'OK': 0.05, // Oklahoma - simplified average
-  'OR': 0.085, // Oregon - simplified average
-  'PA': 0.0307, // Pennsylvania - flat rate
-  'RI': 0.055, // Rhode Island - simplified average
-  'SC': 0.06, // South Carolina - simplified average
-  'SD': 0.00, // South Dakota - no state income tax
-  'TN': 0.00, // Tennessee - no state income tax
-  'TX': 0.00, // Texas - no state income tax
-  'UT': 0.0495, // Utah - flat rate
-  'VT': 0.075, // Vermont - simplified average
-  'VA': 0.055, // Virginia - simplified average
-  'WA': 0.00, // Washington - no state income tax
-  'WV': 0.055, // West Virginia - simplified average
-  'WI': 0.065, // Wisconsin - simplified average
-  'WY': 0.00, // Wyoming - no state income tax
+  'AL': 0.05,    // Alabama: 2% - 5% (approx top bracket as effective cap)
+  'AK': 0.00,    // Alaska: 0%
+  'AZ': 0.028,   // Arizona: 2.55% - 2.98% (approx midpoint)
+  'AR': 0.047,   // Arkansas: 0% - 4.7%
+  'CA': 0.08,    // California: 1% - 13.3% (approx effective)
+  'CO': 0.044,   // Colorado: flat 4.4%
+  'CT': 0.06,    // Connecticut: 3% - 6.99%
+  'DE': 0.055,   // Delaware: 2.2% - 6.6%
+  'FL': 0.00,    // Florida: 0%
+  'GA': 0.05,    // Georgia: 1% - 5.75%
+  'HI': 0.055,   // Hawaii: 1.4% - 11% (approx midpoint; SDI separate)
+  'ID': 0.058,   // Idaho: ~5.8%
+  'IL': 0.0495,  // Illinois: flat 4.95%
+  'IN': 0.0315,  // Indiana: flat 3.15% (county tax not included)
+  'IA': 0.052,   // Iowa: 4.4% - 6%
+  'KS': 0.044,   // Kansas: 3.1% - 5.7%
+  'KY': 0.045,   // Kentucky: flat 4.5%
+  'LA': 0.03,    // Louisiana: 1.85% - 4.25%
+  'ME': 0.064,   // Maine: 5.8% - 7.15%
+  'MD': 0.05,    // Maryland: 2% - 5.75% (county tax not included)
+  'MA': 0.05,    // Massachusetts: flat 5%
+  'MI': 0.0405,  // Michigan: flat 4.05% (city tax not included)
+  'MN': 0.072,   // Minnesota: 5.35% - 9.85%
+  'MS': 0.05,    // Mississippi: 0% - 5%
+  'MO': 0.042,   // Missouri: 1.5% - 4.95%
+  'MT': 0.05,    // Montana: 1% - 6.75%
+  'NE': 0.045,   // Nebraska: 2.46% - 6.64%
+  'NV': 0.00,    // Nevada: 0%
+  'NH': 0.00,    // New Hampshire: wages 0%
+  'NJ': 0.06,    // New Jersey: 1.4% - 10.75% (SDI/FLI separate)
+  'NM': 0.04,    // New Mexico: 1.7% - 5.9%
+  'NY': 0.065,   // New York: 4% - 10.9% (NYC tax not included)
+  'NC': 0.045,   // North Carolina: flat 4.5%
+  'ND': 0.02,    // North Dakota: 1.1% - 2.9%
+  'OH': 0.03,    // Ohio: 0% - 3.99% (local city tax not included)
+  'OK': 0.035,   // Oklahoma: 0.25% - 4.75%
+  'OR': 0.074,   // Oregon: 4.75% - 9.9%
+  'PA': 0.0307,  // Pennsylvania: flat 3.07% (local wage tax not included)
+  'RI': 0.05,    // Rhode Island: 3.75% - 5.99% (TDI separate)
+  'SC': 0.05,    // South Carolina: 0% - 6.5%
+  'SD': 0.00,    // South Dakota: 0%
+  'TN': 0.00,    // Tennessee: 0%
+  'TX': 0.00,    // Texas: 0%
+  'UT': 0.0465,  // Utah: flat 4.65%
+  'VT': 0.06,    // Vermont: 3.35% - 8.75%
+  'VA': 0.0475,  // Virginia: 2% - 5.75%
+  'WA': 0.00,    // Washington: 0% (capital gains not payroll)
+  'WV': 0.05,    // West Virginia: 3% - 6.5%
+  'WI': 0.058,   // Wisconsin: 3.54% - 7.65%
+  'WY': 0.00,    // Wyoming: 0%
 }
 
 // Social Security wage base for 2024

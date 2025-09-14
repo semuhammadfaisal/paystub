@@ -39,12 +39,12 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
 
   // Auto-calculate taxes when component loads or key data changes
   useEffect(() => {
-    // Ensure salary uses per-period amount, not annual
+    // Ensure salary uses per-period amount based on MAX periods for the selected frequency (ignore selected # of stubs)
     const grossPay = data.payType === "hourly" 
       ? ((data.hourlyRate || 0) * (data.hoursWorked || 0)) + ((data.overtimeRate || 0) * (data.overtimeHours || 0))
-      : (data.salary && data.numberOfPaystubs
-          ? data.salary / data.numberOfPaystubs
-          : (data.salary || 0))
+      : (data.salary
+          ? data.salary / getMaxPaystubs(data.payFrequency)
+          : 0)
     
     if (grossPay > 0) {
       // If contractor, no statutory deductions
@@ -263,9 +263,10 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
       
       // Calculate gross pay per period
       let grossPay = 0
-      if (newData.payType === "salary" && newData.salary && newData.numberOfPaystubs) {
-        // For salary: calculate per-period amount based on annual salary and total paystubs required
-        grossPay = calculateGrossPayPerPeriod(newData.salary, newData.numberOfPaystubs)
+      if (newData.payType === "salary" && newData.salary) {
+        // For salary: per-period amount should be based on MAX pay periods of the selected frequency (not selected # of stubs)
+        const maxPeriods = getMaxPaystubs(newData.payFrequency)
+        grossPay = calculateGrossPayPerPeriod(newData.salary, maxPeriods)
       } else if (newData.payType === "hourly") {
         // For hourly: use traditional calculation
         const regularPay = (newData.hourlyRate || 0) * (newData.hoursWorked || 0)
@@ -426,8 +427,10 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
       const regularPay = (data.hourlyRate || 0) * (data.hoursWorked || 0)
       const overtimePay = (data.overtimeRate || 0) * (data.overtimeHours || 0)
       return regularPay + overtimePay
-    } else if (data.payType === "salary" && data.salary && data.numberOfPaystubs) {
-      return calculateGrossPayPerPeriod(data.salary, data.numberOfPaystubs)
+    } else if (data.payType === "salary" && data.salary) {
+      // Use MAX periods for the selected frequency to keep YTD consistent regardless of selected number of stubs
+      const maxPeriods = getMaxPaystubs(data.payFrequency)
+      return calculateGrossPayPerPeriod(data.salary, maxPeriods)
     } else {
       return data.salary || 0
     }

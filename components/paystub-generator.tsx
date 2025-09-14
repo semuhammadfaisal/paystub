@@ -269,18 +269,35 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
         updated.payDate = toISO(pay)
       }
 
-      // Calculate gross pay
-      if (updated.payType === "hourly") {
-        const regularPay = (updated.hourlyRate || 0) * (updated.hoursWorked || 0)
-        const overtimePay = (updated.overtimeRate || 0) * (updated.overtimeHours || 0)
-        const holidayPay = (updated.holidayHours || 0) * (updated.hourlyRate || 0)
-        const sickPay = (updated.sickHours || 0) * (updated.hourlyRate || 0)
-        const vacationPay = (updated.vacationHours || 0) * (updated.hourlyRate || 0)
-        updated.grossPay =
-          regularPay + overtimePay + holidayPay + sickPay + vacationPay + (updated.bonusAmount || 0) + (updated.commissionAmount || 0)
-      } else {
-        // Salary-based gross pay
-        updated.grossPay = (updated.salary || 0) + (updated.bonusAmount || 0) + (updated.commissionAmount || 0)
+      // Calculate gross pay only if it wasn't explicitly provided by the form logic
+      if (typeof updates.grossPay === 'undefined') {
+        if (updated.payType === "hourly") {
+          const regularPay = (updated.hourlyRate || 0) * (updated.hoursWorked || 0)
+          const overtimePay = (updated.overtimeRate || 0) * (updated.overtimeHours || 0)
+          const holidayPay = (updated.holidayHours || 0) * (updated.hourlyRate || 0)
+          const sickPay = (updated.sickHours || 0) * (updated.hourlyRate || 0)
+          const vacationPay = (updated.vacationHours || 0) * (updated.hourlyRate || 0)
+          updated.grossPay =
+            regularPay + overtimePay + holidayPay + sickPay + vacationPay + (updated.bonusAmount || 0) + (updated.commissionAmount || 0)
+        } else {
+          // Salary-based per-period gross pay: divide annual salary by MAX periods for the selected frequency
+          const getMaxPaystubs = (frequency: string | undefined): number => {
+            switch ((frequency || 'bi-weekly').toLowerCase()) {
+              case 'daily': return 52
+              case 'weekly': return 52
+              case 'bi-weekly': return 26
+              case 'semi-monthly': return 24
+              case 'monthly': return 12
+              case 'quarterly': return 4
+              case 'semi-annually': return 2
+              case 'annually': return 1
+              default: return 26
+            }
+          }
+          const periods = getMaxPaystubs(updated.payFrequency)
+          const perPeriodSalary = (updated.salary || 0) / (periods || 1)
+          updated.grossPay = perPeriodSalary + (updated.bonusAmount || 0) + (updated.commissionAmount || 0)
+        }
       }
 
       // Calculate total deductions
