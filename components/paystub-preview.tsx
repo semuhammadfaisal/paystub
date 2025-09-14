@@ -1,6 +1,10 @@
 "use client"
 
 import type { PaystubData } from "@/components/paystub-generator"
+import { ClassicPreview } from "@/components/paystub-templates/classic"
+import { ModernPreview } from "@/components/paystub-templates/modern"
+import { DetailedPreview } from "@/components/paystub-templates/detailed"
+import { CompactPreview } from "@/components/paystub-templates/compact"
 
 interface PaystubPreviewProps {
   data: PaystubData
@@ -24,6 +28,15 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
     return `XXX-XX-${ssn.slice(-4)}`
   }
 
+  // Theme accent color for preview (fallback to existing teal if not provided)
+  const accent = data.themeColor || "#239BA0"
+
+  // Modular template routing: if a non-classic template is selected, render it
+  const selected = (data.templateId || 'template1').toLowerCase()
+  if (selected === 'template2') return <ModernPreview data={data} />
+  if (selected === 'template3') return <DetailedPreview data={data} />
+  if (selected === 'template4') return <CompactPreview data={data} />
+
   return (
     <div className="bg-white border-2 border-gray-300 p-6 text-sm font-mono">
       {/* Header */}
@@ -38,7 +51,7 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
               />
             )}
             <div>
-              <h1 className="text-lg font-bold text-primary">PAYROLL STATEMENT</h1>
+              <h1 className="text-lg font-bold" style={{ color: accent }}>PAYROLL STATEMENT</h1>
               <div className="mt-2">
                 <div className="font-bold">{data.companyName || "Company Name"}</div>
                 <div>{data.companyAddress || "Company Address"}</div>
@@ -51,7 +64,7 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
             </div>
           </div>
           <div className="text-right">
-            <div className="bg-secondary text-secondary-foreground px-3 py-1 rounded font-bold">Paystub</div>
+            <div className="px-3 py-1 rounded font-bold" style={{ backgroundColor: accent, color: '#ffffff' }}>Paystub</div>
             <div className="mt-2 text-xs">
               <div>Pay Date: {formatDate(data.payDate)}</div>
               <div>
@@ -65,7 +78,7 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
       {/* Employee Information */}
       <div className="grid grid-cols-2 gap-8 mb-6">
         <div>
-          <h3 className="font-bold text-primary mb-2">EMPLOYEE INFORMATION</h3>
+          <h3 className="font-bold mb-2" style={{ color: accent }}>EMPLOYEE INFORMATION</h3>
           <div>{data.employeeName || "Employee Name"}</div>
           <div>{data.employeeAddress || "Employee Address"}</div>
           <div>
@@ -76,7 +89,7 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
           {data.employeePhone && <div>Phone: {data.employeePhone}</div>}
         </div>
         <div>
-          <h3 className="font-bold text-primary mb-2">PAY INFORMATION</h3>
+          <h3 className="font-bold mb-2" style={{ color: accent }}>PAY INFORMATION</h3>
           <div>Pay Frequency: {data.payFrequency || "Bi-Weekly"}</div>
           <div>Pay Type: {data.payType === "hourly" ? "Hourly" : "Salary"}</div>
                       {data.payType === "hourly" && (
@@ -105,7 +118,7 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
       {/* Earnings and Deductions */}
       <div className="grid grid-cols-2 gap-8 mb-6">
         <div>
-          <h3 className="font-bold text-primary mb-2 border-b border-gray-400">EARNINGS</h3>
+          <h3 className="font-bold mb-2 border-b border-gray-400" style={{ color: accent }}>EARNINGS</h3>
           <div className="space-y-1">
             {data.payType === "hourly" ? (
               <>
@@ -164,7 +177,7 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
         </div>
 
         <div>
-          <h3 className="font-bold text-primary mb-2 border-b border-gray-400">DEDUCTIONS</h3>
+          <h3 className="font-bold mb-2 border-b border-gray-400" style={{ color: accent }}>DEDUCTIONS</h3>
           <div className="space-y-1">
             {data.federalTax > 0 && (
               <div className="flex justify-between">
@@ -260,7 +273,7 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
 
       {/* Net Pay */}
       <div className="border-t-2 border-gray-800 pt-4">
-        <div className="flex justify-between items-center bg-primary text-primary-foreground p-3 rounded">
+        <div className="flex justify-between items-center p-3 rounded" style={{ backgroundColor: accent, color: '#ffffff' }}>
           <span className="text-lg font-bold">NET PAY</span>
           <span className="text-xl font-bold">{formatCurrency(data.netPay)}</span>
         </div>

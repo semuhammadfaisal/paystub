@@ -14,6 +14,9 @@ import { StepHeader } from "@/components/step-header"
 export interface PaystubData {
   // Template Selection
   templateId: string
+  // Theme Selection
+  themeId?: string
+  themeColor?: string
 
   // Additional Template Fields
   coNumber: string
@@ -122,10 +125,13 @@ export interface PaystubData {
 
 interface PaystubGeneratorProps {
   user: any
+  initialTemplateId?: string
 }
 
 const initialData: PaystubData = {
   templateId: "template1",
+  themeId: "blue",
+  themeColor: "#60a5fa",
   coNumber: "",
   fileNumber: "",
   deptNumber: "",
@@ -201,8 +207,11 @@ const initialData: PaystubData = {
   netPay: 0,
 }
 
-export function PaystubGenerator({ user }: PaystubGeneratorProps) {
-  const [paystubData, setPaystubData] = useState<PaystubData>(initialData)
+export function PaystubGenerator({ user, initialTemplateId }: PaystubGeneratorProps) {
+  const [paystubData, setPaystubData] = useState<PaystubData>(() => ({
+    ...initialData,
+    templateId: initialTemplateId || initialData.templateId,
+  }))
   const [isSaving, setIsSaving] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
 
@@ -440,6 +449,7 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
         employer_ein: paystubData.companyEIN,
         employer_phone: paystubData.companyPhone,
         employer_logo: paystubData.companyLogo,
+        theme_color: paystubData.themeColor,
 
         // Pay period details
         pay_period_start: paystubData.payPeriodStart,
@@ -523,6 +533,31 @@ export function PaystubGenerator({ user }: PaystubGeneratorProps) {
         </div>
 
         <StepHeader step={7} title="Review" />
+
+        {/* Theme color options */}
+        <div className="bg-white p-6 rounded-lg border">
+          <div className="text-center mb-3 font-medium">Color options</div>
+          <div className="flex items-center justify-center gap-3">
+            {([
+              { id: 'blue', color: '#60a5fa' },
+              { id: 'green', color: '#10b981' },
+              { id: 'gray', color: '#9ca3af' },
+              { id: 'purple', color: '#8b5cf6' },
+              { id: 'orange', color: '#f59e0b' },
+              { id: 'red', color: '#ef4444' },
+            ] as const).map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                aria-label={`Theme ${t.id}`}
+                onClick={() => updatePaystubData({ themeId: t.id, themeColor: t.color })}
+                className="w-8 h-8 rounded shadow border-2"
+                style={{ backgroundColor: t.color, borderColor: paystubData.themeId === t.id ? t.color : '#e5e7eb' }}
+                title={t.id}
+              />
+            ))}
+          </div>
+        </div>
 
         <div className="bg-white">
           <PaystubPreview data={paystubData} />

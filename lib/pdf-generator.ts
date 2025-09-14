@@ -13,6 +13,8 @@ export interface PaystubData {
   employer_ein: string
   employer_phone?: string
   employer_logo?: string
+  // Theme
+  theme_color?: string
 
   // Pay period details
   pay_period_start: string
@@ -152,6 +154,9 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     const contentWidth = canvasWidth - margin * 2
     let y = margin
 
+    // Accent color (theme)
+    const accent = data.theme_color || "#239BA0"
+
     // Main container border (subtle gray border)
     drawRect(margin, margin, contentWidth, canvasHeight - margin * 2, "#ffffff", "#e5e7eb", 1)
 
@@ -225,7 +230,7 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     const payStubBoxWidth = 120
     const payStubBoxHeight = 30
     const payStubBoxX = canvasWidth - margin - payStubBoxWidth - 30
-    drawRect(payStubBoxX, y - 5, payStubBoxWidth, payStubBoxHeight, "#239BA0")
+    drawRect(payStubBoxX, y - 5, payStubBoxWidth, payStubBoxHeight, accent)
     drawText("Paystub", payStubBoxX + payStubBoxWidth / 2, y + 10, "bold 14px 'Times New Roman'", "#ffffff", "center")
 
     // Pay dates (right aligned)
@@ -244,7 +249,7 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     const rightColumnX = margin + 30 + (contentWidth / 2) + 20
     
     // Left column - Employee Information
-    drawText("EMPLOYEE INFORMATION", leftColumnX, y, "bold 13px 'Times New Roman'", "#239BA0")
+    drawText("EMPLOYEE INFORMATION", leftColumnX, y, "bold 13px 'Times New Roman'", accent)
     drawLine(leftColumnX, y + 8, leftColumnX + 180, y + 8, "#cbd5e1", 1)
     
     let leftY = y + 30
@@ -264,7 +269,7 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     }
     
     // Right column - Pay Information
-    drawText("PAY INFORMATION", rightColumnX, y, "bold 13px 'Times New Roman'", "#239BA0")
+    drawText("PAY INFORMATION", rightColumnX, y, "bold 13px 'Times New Roman'", accent)
     drawLine(rightColumnX, y + 8, rightColumnX + 180, y + 8, "#cbd5e1", 1)
     
     let rightY = y + 30
@@ -301,7 +306,7 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     const columnWidth = 250
     
     // Earnings column
-    drawText("EARNINGS", earningsX, y, "bold 13px 'Times New Roman'", "#239BA0")
+    drawText("EARNINGS", earningsX, y, "bold 13px 'Times New Roman'", accent)
     drawLine(earningsX, y + 8, earningsX + columnWidth - 50, y + 8, "#cbd5e1", 1)
     
     let earningsY = y + 30
@@ -369,7 +374,7 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     drawText(formatCurrency(data.gross_pay), earningsX + columnWidth - 50, earningsY, "bold 13px 'Times New Roman'", "#1f2937", "right")
     
     // Deductions column
-    drawText("DEDUCTIONS", deductionsX, y, "bold 13px 'Times New Roman'", "#239BA0")
+    drawText("DEDUCTIONS", deductionsX, y, "bold 13px 'Times New Roman'", accent)
     drawLine(deductionsX, y + 8, deductionsX + columnWidth - 50, y + 8, "#cbd5e1", 1)
     
     let deductionsY = y + 30
@@ -412,7 +417,7 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     y = maxY + 30
 
     // YTD Summary
-    drawText("YEAR-TO-DATE", margin + 30, y, "bold 13px 'Times New Roman'", "#239BA0")
+    drawText("YEAR-TO-DATE", margin + 30, y, "bold 13px 'Times New Roman'", accent)
     y += 20
     const ytdLabelX = margin + 30
     const ytdValueX = ytdLabelX + 220
@@ -448,7 +453,7 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     
     // Net Pay section with custom teal background (full width)
     const netPayHeight = 60
-    drawRect(margin + 30, y, contentWidth - 60, netPayHeight, "#239BA0")
+    drawRect(margin + 30, y, contentWidth - 60, netPayHeight, accent)
     
     // Net pay text (white on teal)
     drawText("NET PAY", margin + 50, y + netPayHeight / 2, "bold 20px 'Times New Roman'", "#ffffff")
