@@ -8,7 +8,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { StepHeader } from "@/components/step-header"
 import type { PaystubData } from "@/components/paystub-generator"
 import { useState, useEffect } from "react"
-import { calculateTaxes, type TaxCalculationInput } from "@/lib/tax-calculator"
+import { calculateTaxes, calculateStateDisability, type TaxCalculationInput } from "@/lib/tax-calculator"
 
 interface PaystubFormProps {
   data: PaystubData
@@ -54,6 +54,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
           socialSecurity: 0,
           federalTax: 0,
           stateTax: 0,
+          stateDisability: 0,
           totalDeductions: 0,
           netPay: grossPay,
           grossPay
@@ -65,13 +66,15 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
         const socialSecurity = grossPay * lockedRates.socialSecurityRate
         const federalTax = grossPay * lockedRates.federalRate
         const stateTax = data.taxState ? (grossPay * lockedRates.stateRate) : 0
-        const totalDeductions = medicare + socialSecurity + federalTax + stateTax
+        const stateDisability = calculateStateDisability(grossPay, data.payFrequency || 'bi-weekly', data.taxState || '', data.ytdGrossPay || 0)
+        const totalDeductions = medicare + socialSecurity + federalTax + stateTax + stateDisability
         const netPay = grossPay - totalDeductions
         onUpdate({
           medicare,
           socialSecurity,
           federalTax,
           stateTax,
+          stateDisability,
           totalDeductions,
           netPay,
           grossPay
@@ -96,6 +99,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
           socialSecurity: taxResult.socialSecurity,
           federalTax: taxResult.federalTax,
           stateTax: taxResult.stateTax,
+          stateDisability: taxResult.stateDisability,
           totalDeductions: taxResult.totalDeductions,
           netPay: taxResult.netPay,
           grossPay
@@ -281,6 +285,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
         updates.socialSecurity = 0
         updates.federalTax = 0
         updates.stateTax = 0
+        updates.stateDisability = 0
         updates.totalDeductions = 0
         updates.netPay = grossPay
         const payPeriodNum = newData.payPeriodNumber || 1
@@ -302,7 +307,8 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
           updates.socialSecurity = grossPay * lockedRates.socialSecurityRate
           updates.federalTax = grossPay * lockedRates.federalRate
           updates.stateTax = newData.taxState ? (grossPay * lockedRates.stateRate) : 0
-          updates.totalDeductions = (updates.medicare || 0) + (updates.socialSecurity || 0) + (updates.federalTax || 0) + (updates.stateTax || 0)
+          updates.stateDisability = calculateStateDisability(grossPay, newData.payFrequency, newData.taxState, newData.ytdGrossPay || 0)
+          updates.totalDeductions = (updates.medicare || 0) + (updates.socialSecurity || 0) + (updates.federalTax || 0) + (updates.stateTax || 0) + (updates.stateDisability || 0)
           updates.netPay = grossPay - (updates.totalDeductions || 0)
         } else {
           const taxInput: TaxCalculationInput = {
@@ -321,6 +327,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
           updates.socialSecurity = taxResult.socialSecurity
           updates.federalTax = taxResult.federalTax
           updates.stateTax = taxResult.stateTax
+          updates.stateDisability = taxResult.stateDisability
           updates.totalDeductions = taxResult.totalDeductions
           updates.netPay = taxResult.netPay
 
@@ -360,7 +367,8 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
           updates.socialSecurity = grossPay * lockedRates.socialSecurityRate
           updates.federalTax = grossPay * lockedRates.federalRate
           updates.stateTax = grossPay * lockedRates.stateRate
-          updates.totalDeductions = (updates.medicare || 0) + (updates.socialSecurity || 0) + (updates.federalTax || 0) + (updates.stateTax || 0)
+          updates.stateDisability = calculateStateDisability(grossPay, defaultPayFrequency, defaultTaxState, newData.ytdGrossPay || 0)
+          updates.totalDeductions = (updates.medicare || 0) + (updates.socialSecurity || 0) + (updates.federalTax || 0) + (updates.stateTax || 0) + (updates.stateDisability || 0)
           updates.netPay = grossPay - (updates.totalDeductions || 0)
         } else {
           const taxInput: TaxCalculationInput = {
@@ -379,6 +387,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
           updates.socialSecurity = taxResult.socialSecurity
           updates.federalTax = taxResult.federalTax
           updates.stateTax = taxResult.stateTax
+          updates.stateDisability = taxResult.stateDisability
           updates.totalDeductions = taxResult.totalDeductions
           updates.netPay = taxResult.netPay
 
@@ -439,7 +448,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
   // Calculate total deductions for current period (for display only)
   const calculateTotalDeductions = () => {
     if (data.employmentType === 'contractor') return 0
-    return (data.medicare || 0) + (data.socialSecurity || 0) + (data.federalTax || 0) + (data.stateTax || 0)
+    return (data.medicare || 0) + (data.socialSecurity || 0) + (data.federalTax || 0) + (data.stateTax || 0) + (data.stateDisability || 0)
   }
 
   // Calculate net pay for current period (for display only)
@@ -1442,6 +1451,31 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                         {(() => {
                           const currentState = data.stateTax || 0
                           return formatAmount(calculateYTDTotal(currentState, data.payPeriodNumber || 1))
+                        })()}
+                      </td>
+                    </tr>
+                    <tr className="border-b border-gray-200">
+                      <td className="p-4 text-sm text-gray-700 border-r border-gray-200 flex items-center gap-2">
+                        SDI
+                      </td>
+                      <td className="p-4 border-r border-gray-200">
+                        <div className="text-center text-sm font-medium text-gray-700 bg-gray-50 py-2 px-3 rounded">
+                          {data.stateDisability ? formatAmount(data.stateDisability) : '0.00'}
+                        </div>
+                      </td>
+                      <td className="p-4 border-r border-gray-200">
+                        <div className="text-center text-sm font-medium text-gray-700 bg-gray-50 py-2 px-3 rounded">
+                          {(() => {
+                            const currentSDI = data.stateDisability || 0
+                            const priorYTD = calculatePriorYTD(currentSDI, data.payPeriodNumber || 1)
+                            return formatAmount(priorYTD)
+                          })()}
+                        </div>
+                      </td>
+                      <td className="p-4 text-center text-sm font-medium">
+                        {(() => {
+                          const currentSDI = data.stateDisability || 0
+                          return formatAmount(calculateYTDTotal(currentSDI, data.payPeriodNumber || 1))
                         })()}
                       </td>
                     </tr>

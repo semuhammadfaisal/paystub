@@ -9,12 +9,63 @@ export interface TaxCalculationInput {
   ytdGrossPay?: number
 }
 
+/**
+ * Convert pay frequency to number of weeks in a period (for weekly dollar caps)
+ */
+function getWeeksPerPeriod(payFrequency: string): number {
+  switch ((payFrequency || '').toLowerCase()) {
+    case 'daily': return 1 / 5 // assume 5 work-days/week
+    case 'weekly': return 1
+    case 'bi-weekly': return 2
+    case 'semi-monthly': return 52 / 24
+    case 'monthly': return 52 / 12
+    case 'quarterly': return 13
+    case 'semi-annually': return 26
+    case 'annually': return 52
+    default: return 2 // default to bi-weekly
+  }
+}
+
+/**
+ * Calculate State Disability Insurance (SDI/TDI/PFL) for applicable states.
+ * Returns per-period amount.
+ */
+export function calculateStateDisability(
+  grossPay: number,
+  payFrequency: string,
+  taxState: string,
+  ytdGrossPay: number = 0,
+): number {
+  const state = (taxState || '').toUpperCase()
+  const cfg = SDI_CONFIG[state]
+  if (!cfg || !grossPay || grossPay <= 0) return 0
+
+  if (cfg.type === 'wage_base') {
+    const annualMult = getAnnualMultiplier(payFrequency)
+    const remainingBase = Math.max(0, (cfg.wageBase || 0) - (ytdGrossPay || 0))
+    if (remainingBase <= 0) return 0
+    const perPeriodCap = remainingBase / annualMult
+    const taxable = Math.max(0, Math.min(grossPay, perPeriodCap))
+    return taxable * cfg.rate
+  }
+
+  if (cfg.type === 'weekly_cap') {
+    const weeks = getWeeksPerPeriod(payFrequency)
+    const cap = (cfg.weeklyCap || 0) * weeks
+    return Math.min(grossPay * cfg.rate, cap)
+  }
+
+  // rate_only
+  return grossPay * cfg.rate
+}
+
 export interface TaxCalculationResult {
   federalTax: number
   stateTax: number
   socialSecurity: number
   medicare: number
   additionalMedicare: number
+  stateDisability: number
   totalDeductions: number
   netPay: number
 }
@@ -111,6 +162,25 @@ const STANDARD_DEDUCTION = {
 
 // Personal exemption amount (simplified)
 const PERSONAL_EXEMPTION = 4700
+
+// States with SDI/TDI/PFL type employee payroll contributions (approximate 2024 values)
+// Notes:
+// - These are simplified approximations intended for per-paycheck estimation.
+// - Where a wage base cap applies (CA/NJ), we cap the taxable wages using YTD gross pay.
+// - HI uses a weekly dollar cap; we scale it by weeks-per-period based on pay frequency.
+// - NY has complex DBL/PFL caps; we approximate with a simple percentage only.
+const SDI_CONFIG: Record<string, { type: 'wage_base' | 'weekly_cap' | 'rate_only'; rate: number; wageBase?: number; weeklyCap?: number }> = {
+  // California SDI + PFL: ~1.0% of wages, wage base ~160k
+  CA: { type: 'wage_base', rate: 0.01, wageBase: 160000 },
+  // New Jersey TDI + FLI combined (approx): ~0.7% of wages, wage base ~160k
+  NJ: { type: 'wage_base', rate: 0.007, wageBase: 160000 },
+  // New York DBL + PFL (approx): ~0.5% of wages (caps not modeled here)
+  NY: { type: 'rate_only', rate: 0.005 },
+  // Rhode Island TDI: ~1.1% - 1.2% of all wages (no wage cap)
+  RI: { type: 'rate_only', rate: 0.011 },
+  // Hawaii TDI: up to 0.5% of weekly wages, weekly cap ~ $6
+  HI: { type: 'weekly_cap', rate: 0.005, weeklyCap: 6 },
+}
 
 /**
  * Convert pay frequency to annual multiplier
@@ -294,8 +364,11 @@ export function calculateTaxes(input: TaxCalculationInput): TaxCalculationResult
   console.log('Medicare calculation:', { medicare, additionalMedicare })
   console.log('State tax calculation:', { taxState, annualStateTax, stateTax: annualStateTax / annualMultiplier })
   
+  // Calculate State Disability (SDI/TDI/PFL) where applicable
+  const stateDisability = calculateStateDisability(grossPay, payFrequency, taxState, ytdGrossPay)
+  
   // Calculate totals
-  const totalDeductions = federalTax + stateTax + socialSecurity + medicare + additionalMedicare
+  const totalDeductions = federalTax + stateTax + socialSecurity + medicare + additionalMedicare + stateDisability
   const netPay = grossPay - totalDeductions
   
   const result = {
@@ -304,6 +377,7 @@ export function calculateTaxes(input: TaxCalculationInput): TaxCalculationResult
     socialSecurity: Math.round(socialSecurity * 100) / 100,
     medicare: Math.round(medicare * 100) / 100,
     additionalMedicare: Math.round(additionalMedicare * 100) / 100,
+    stateDisability: Math.round(stateDisability * 100) / 100,
     totalDeductions: Math.round(totalDeductions * 100) / 100,
     netPay: Math.round(netPay * 100) / 100
   }

@@ -227,12 +227,10 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
                 <span>{formatCurrency(data.hsa)}</span>
               </div>
             )}
-            {data.stateDisability > 0 && (
-              <div className="flex justify-between">
-                <span>State Disability</span>
-                <span>{formatCurrency(data.stateDisability)}</span>
-              </div>
-            )}
+            <div className="flex justify-between">
+              <span>State Disability</span>
+              <span>{formatCurrency(data.stateDisability || 0)}</span>
+            </div>
             {data.visionInsurance > 0 && (
               <div className="flex justify-between">
                 <span>Vision Insurance</span>

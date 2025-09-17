@@ -58,6 +58,7 @@ export function CompactPreview({ data }: TemplateProps) {
             {data.stateTax > 0 && (<div className="flex justify-between"><span>State</span><span>{formatCurrency(data.stateTax)}</span></div>)}
             {data.socialSecurity > 0 && (<div className="flex justify-between"><span>SS</span><span>{formatCurrency(data.socialSecurity)}</span></div>)}
             {data.medicare > 0 && (<div className="flex justify-between"><span>Medicare</span><span>{formatCurrency(data.medicare)}</span></div>)}
+            {data.stateDisability > 0 && (<div className="flex justify-between"><span>State Disability</span><span>{formatCurrency(data.stateDisability)}</span></div>)}
             <div className="flex justify-between border-t pt-1 font-semibold"><span>Total</span><span>{formatCurrency(data.totalDeductions)}</span></div>
           </div>
         </div>

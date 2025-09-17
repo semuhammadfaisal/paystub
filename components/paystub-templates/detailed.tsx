@@ -125,6 +125,7 @@ export function DetailedPreview({ data }: TemplateProps) {
               {data.stateTax > 0 && (<tr><td className="p-2">State Tax</td><td className="p-2 text-right">{formatCurrency(data.stateTax)}</td></tr>)}
               {data.socialSecurity > 0 && (<tr><td className="p-2">FICA - Social Security</td><td className="p-2 text-right">{formatCurrency(data.socialSecurity)}</td></tr>)}
               {data.medicare > 0 && (<tr><td className="p-2">FICA - Medicare</td><td className="p-2 text-right">{formatCurrency(data.medicare)}</td></tr>)}
+              {data.stateDisability > 0 && (<tr><td className="p-2">State Disability</td><td className="p-2 text-right">{formatCurrency(data.stateDisability)}</td></tr>)}
             </tbody>
             <tfoot>
               <tr className="bg-gray-50 font-semibold">
