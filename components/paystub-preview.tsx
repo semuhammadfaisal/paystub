@@ -228,7 +228,7 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
               </div>
             )}
             <div className="flex justify-between">
-              <span>State Disability</span>
+              <span>{((data.taxState || '').toUpperCase() === 'HI') ? 'TDI' : 'State Disability'}</span>
               <span>{formatCurrency(data.stateDisability || 0)}</span>
             </div>
             {data.visionInsurance > 0 && (

@@ -10,6 +10,7 @@ import { Save, Download } from "lucide-react"
 import { savePaystub } from "@/lib/actions"
 import { generatePaystubPDF, downloadPDF } from "@/lib/pdf-generator"
 import { StepHeader } from "@/components/step-header"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export interface PaystubData {
   // Template Selection
@@ -556,6 +557,29 @@ export function PaystubGenerator({ user, initialTemplateId }: PaystubGeneratorPr
                 title={t.id}
               />
             ))}
+          </div>
+        </div>
+
+        {/* Template selection dropdown */}
+        <div className="bg-white p-6 rounded-lg border">
+          <div className="text-center sm:text-left mb-3 font-medium">Select template</div>
+          <div className="flex justify-center sm:justify-start">
+            <div className="w-56">
+              <Select
+                value={paystubData.templateId}
+                onValueChange={(v) => updatePaystubData({ templateId: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Template #1" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="template1">Template #1</SelectItem>
+                  <SelectItem value="template2">Template #2</SelectItem>
+                  <SelectItem value="template3">Template #3</SelectItem>
+                  <SelectItem value="template4">Template #4</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 

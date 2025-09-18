@@ -12,146 +12,133 @@ const formatDate = (ds: string) => (ds ? new Date(ds).toLocaleDateString("en-US"
 const maskSSN = (ssn: string) => (!ssn ? "" : `XXX-XX-${ssn.slice(-4)}`)
 
 export function DetailedPreview({ data }: TemplateProps) {
-  const accent = data.themeColor || "#4f46e5" // indigo
+  const accent = '#000' // strong borders per layout
+  const periods = data.payPeriodNumber || 1
+  const withYtdFallback = (ytd?: number, per?: number) => (ytd && ytd > 0 ? ytd : (per || 0) * periods)
+  const ytdMedicare = withYtdFallback(data.ytdMedicare, data.medicare)
+  const ytdSS = withYtdFallback(data.ytdSocialSecurity, data.socialSecurity)
+  const ytdFederal = withYtdFallback(data.ytdFederalTax, data.federalTax)
+  const ytdState = withYtdFallback(data.ytdStateTax, data.stateTax)
+  const ytdSDI = withYtdFallback(undefined, data.stateDisability)
+  const taxesCurrent = (data.federalTax||0)+(data.stateTax||0)+(data.socialSecurity||0)+(data.medicare||0)+(data.stateDisability||0)
+  const taxesYtd = ytdFederal + ytdState + ytdSS + ytdMedicare + ytdSDI
+  const ytdGross = withYtdFallback(data.ytdGrossPay, data.grossPay)
+  const ytdNet = withYtdFallback(data.ytdNetPay, data.netPay) || Math.max(0, ytdGross - taxesYtd)
+  const logo = data.companyLogo ? (
+    <img src={data.companyLogo} alt="Company Logo" className="w-12 h-12 object-contain bg-white border border-gray-500 rounded" />
+  ) : (
+    <div className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center text-lg font-bold">⟐</div>
+  )
+  const employeeNo = data.employeeId || (data.employeeSSN ? data.employeeSSN.replace(/\D/g, '').slice(-9) : '123456789')
+  const stateDisabilityLabel = ((data.taxState || '').toUpperCase() === 'HI') ? 'TDI' : 'SDI'
+
   return (
-    <div className="bg-white border p-5 text-[13px]">
-      {/* Header banner */}
-      <div className="rounded-md mb-4" style={{ backgroundColor: accent, color: '#fff' }}>
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="font-bold text-base">EARNINGS STATEMENT</div>
-          <div className="text-xs">Pay Date: {formatDate(data.payDate)} • Period: {formatDate(data.payPeriodStart)} - {formatDate(data.payPeriodEnd)}</div>
-        </div>
+    <div className="relative" style={{ backgroundColor: '#f0f0f0', padding: 20 }}>
+      {/* Watermark */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 0 }}>
+        <div style={{ transform: 'rotate(-45deg)', fontSize: 100, color: 'rgba(200,200,200,0.3)', fontWeight: 700, letterSpacing: 10 }}>PREVIEW</div>
       </div>
 
-      {/* Employee + Employer block */}
-      <div className="grid grid-cols-3 gap-4 mb-4">
-        <div className="border rounded p-3">
-          <div className="text-xs font-semibold text-gray-600">EMPLOYER</div>
-          <div className="text-sm font-medium">{data.companyName || 'Company Name'}</div>
-          <div className="text-xs text-gray-600">{data.companyAddress || 'Company Address'}</div>
-          <div className="text-xs text-gray-600">EIN: {data.companyEIN || 'XX-XXXXXXX'}</div>
-        </div>
-        <div className="border rounded p-3">
-          <div className="text-xs font-semibold text-gray-600">EMPLOYEE</div>
-          <div className="text-sm font-medium">{data.employeeName || 'Employee Name'}</div>
-          <div className="text-xs text-gray-600">{data.employeeAddress || 'Employee Address'}</div>
-          <div className="text-xs text-gray-600">SSN: {maskSSN(data.employeeSSN)}</div>
-        </div>
-        <div className="border rounded p-3">
-          <div className="text-xs font-semibold text-gray-600">PAY INFO</div>
-          <div className="text-xs grid grid-cols-2 gap-x-2 gap-y-1">
-            <div className="text-gray-600">Frequency</div><div className="font-medium">{data.payFrequency || 'Bi-Weekly'}</div>
-            <div className="text-gray-600">Type</div><div className="font-medium">{data.payType === 'hourly' ? 'Hourly' : 'Salary'}</div>
-            <div className="text-gray-600">Exemptions</div><div className="font-medium">{data.exemptions || 0}</div>
+      {/* Main container */}
+      <div className="relative mx-auto bg-white overflow-hidden" style={{ maxWidth: 800, zIndex: 1 }}>
+        <div className="border-[3px] border-black">
+          {/* Header */}
+          <div className="flex border-b-2 border-black bg-white">
+            <div className="w-[100px] border-r border-black p-2 flex flex-col items-center justify-center">
+              <div className="w-[50px] h-[50px] bg-black rounded-full text-white flex items-center justify-center text-xl font-bold mb-1">{logo}</div>
+              <div className="text-[8px] text-center leading-3">COMPANY LOGO</div>
+            </div>
+            <div className="flex-1 px-4 py-2">
+              <div className="text-[10px] leading-4 mb-1">
+                <div className="font-semibold">{data.companyName || 'COMPANY NAME'}</div>
+                <div>{data.companyAddress || 'COMPANY ADDRESS'}</div>
+                <div>{`${data.companyCity || 'CITY'}, ${data.companyState || 'ST'} ${data.companyZip || 'ZIP'}`}</div>
+              </div>
+            </div>
+            <div className="flex items-center justify-center px-4 py-2 text-center text-[18px] font-bold tracking-widest">
+              EARNINGS STATEMENT
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Two column detail tables */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="border rounded overflow-hidden">
-          <div className="px-3 py-2 text-xs font-semibold" style={{ backgroundColor: accent, color: '#fff' }}>INCOME BREAKDOWN</div>
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="bg-gray-50 text-gray-600">
-                <th className="text-left p-2">Description</th>
-                <th className="text-right p-2">Rate</th>
-                <th className="text-right p-2">Hours</th>
-                <th className="text-right p-2">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.payType === 'hourly' ? (
-                <>
-                  <tr>
-                    <td className="p-2">Regular</td>
-                    <td className="p-2 text-right">{formatCurrency(data.hourlyRate)}</td>
-                    <td className="p-2 text-right">{data.hoursWorked || 0}</td>
-                    <td className="p-2 text-right">{formatCurrency((data.hourlyRate||0)*(data.hoursWorked||0))}</td>
-                  </tr>
-                  {data.overtimeHours > 0 && (
-                    <tr>
-                      <td className="p-2">Overtime</td>
-                      <td className="p-2 text-right">{formatCurrency(data.overtimeRate || data.hourlyRate * 1.5)}</td>
-                      <td className="p-2 text-right">{data.overtimeHours || 0}</td>
-                      <td className="p-2 text-right">{formatCurrency((data.overtimeRate||data.hourlyRate*1.5||0)*(data.overtimeHours||0))}</td>
-                    </tr>
-                  )}
-                </>
-              ) : (
-                <tr>
-                  <td className="p-2">Salary</td>
-                  <td className="p-2 text-right">—</td>
-                  <td className="p-2 text-right">—</td>
-                  <td className="p-2 text-right">{formatCurrency(data.grossPay)}</td>
-                </tr>
-              )}
-              {data.bonusAmount > 0 && (
-                <tr>
-                  <td className="p-2">Bonus</td>
-                  <td className="p-2 text-right">—</td>
-                  <td className="p-2 text-right">—</td>
-                  <td className="p-2 text-right">{formatCurrency(data.bonusAmount)}</td>
-                </tr>
-              )}
-              {data.commissionAmount > 0 && (
-                <tr>
-                  <td className="p-2">Commission</td>
-                  <td className="p-2 text-right">—</td>
-                  <td className="p-2 text-right">—</td>
-                  <td className="p-2 text-right">{formatCurrency(data.commissionAmount)}</td>
-                </tr>
-              )}
-            </tbody>
-            <tfoot>
-              <tr className="bg-gray-50 font-semibold">
-                <td className="p-2" colSpan={3}>Gross Pay</td>
-                <td className="p-2 text-right">{formatCurrency(data.grossPay)}</td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-        <div className="border rounded overflow-hidden">
-          <div className="px-3 py-2 text-xs font-semibold" style={{ backgroundColor: accent, color: '#fff' }}>STATUTORY DEDUCTIONS</div>
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="bg-gray-50 text-gray-600">
-                <th className="text-left p-2">Description</th>
-                <th className="text-right p-2">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.federalTax > 0 && (<tr><td className="p-2">Federal Tax</td><td className="p-2 text-right">{formatCurrency(data.federalTax)}</td></tr>)}
-              {data.stateTax > 0 && (<tr><td className="p-2">State Tax</td><td className="p-2 text-right">{formatCurrency(data.stateTax)}</td></tr>)}
-              {data.socialSecurity > 0 && (<tr><td className="p-2">FICA - Social Security</td><td className="p-2 text-right">{formatCurrency(data.socialSecurity)}</td></tr>)}
-              {data.medicare > 0 && (<tr><td className="p-2">FICA - Medicare</td><td className="p-2 text-right">{formatCurrency(data.medicare)}</td></tr>)}
-              {data.stateDisability > 0 && (<tr><td className="p-2">State Disability</td><td className="p-2 text-right">{formatCurrency(data.stateDisability)}</td></tr>)}
-            </tbody>
-            <tfoot>
-              <tr className="bg-gray-50 font-semibold">
-                <td className="p-2">Total Deductions</td>
-                <td className="p-2 text-right">{formatCurrency(data.totalDeductions)}</td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
+          {/* Employee info header */}
+          <div className="flex text-[10px] bg-black text-white border-b border-black">
+            <div className="flex-1 px-3 py-1 border-r border-[#444]">EMPLOYEE NAME / ADDRESS</div>
+            <div className="w-[120px] px-3 py-1 border-r border-[#444] text-center">EMPLOYEE NO.</div>
+            <div className="w-[150px] px-3 py-1 border-r border-[#444] text-center">REPORTING PERIOD</div>
+            <div className="w-[100px] px-3 py-1 text-center">PAY DATE</div>
+          </div>
 
-      {/* Footer summary */}
-      <div className="mt-4 border rounded">
-        <div className="grid grid-cols-4 text-xs">
-          <div className="p-3 bg-gray-50 font-semibold">YTD GROSS
-            <div className="mt-1 font-bold">{formatCurrency(data.ytdGrossPay)}</div>
+          {/* Employee details */}
+          <div className="flex border-b border-black bg-white">
+            <div className="flex-1 px-3 py-2 border-r border-gray-300 text-[11px] leading-4">
+              <div>{data.employeeName || 'EMPLOYEE NAME'}</div>
+              <div>{data.employeeAddress || 'EMPLOYEE ADDRESS'}</div>
+              <div>{`${data.employeeCity || 'CITY'}, ${data.employeeState || 'ST'} ${data.employeeZip || 'ZIP'}`}</div>
+            </div>
+            <div className="w-[120px] px-3 py-2 border-r border-gray-300 text-center text-[11px]">{employeeNo}</div>
+            <div className="w-[150px] px-3 py-2 border-r border-gray-300 text-center text-[11px]">{formatDate(data.payPeriodStart)} - {formatDate(data.payPeriodEnd)}</div>
+            <div className="w-[100px] px-3 py-2 text-center text-[11px]">{formatDate(data.payDate)}</div>
           </div>
-          <div className="p-3 bg-gray-50 font-semibold">YTD DEDUCTIONS
-            <div className="mt-1 font-bold">{formatCurrency(data.ytdTotalDeductions)}</div>
+
+          {/* Income header */}
+          <div className="flex bg-gray-200 border-b border-black text-[10px] font-bold">
+            <div className="w-[80px] px-3 py-1 border-r border-gray-400">INCOME</div>
+            <div className="w-[100px] px-3 py-1 border-r border-gray-400 text-right">RATE</div>
+            <div className="w-[80px] px-3 py-1 border-r border-gray-400 text-center">HOURS</div>
+            <div className="w-[120px] px-3 py-1 border-r border-gray-400 text-right">CURRENT PAY</div>
+            <div className="flex-1 px-3 py-1 border-r border-gray-400">DEDUCTION</div>
+            <div className="w-[80px] px-3 py-1 border-r border-gray-400 text-right">TOTAL</div>
+            <div className="w-[80px] px-3 py-1 text-right">YTD TOTAL</div>
           </div>
-          <div className="p-3 bg-gray-50 font-semibold">YTD NET PAY
-            <div className="mt-1 font-bold">{formatCurrency(data.ytdNetPay)}</div>
+
+          {/* Income row */}
+          <div className="flex border-b border-gray-300 text-[11px]">
+            <div className="w-[80px] px-3 py-1 border-r border-gray-200">{data.payType === 'hourly' ? 'Hourly' : 'Salary'}</div>
+            <div className="w-[100px] px-3 py-1 border-r border-gray-200 text-right">{formatCurrency(data.payType === 'hourly' ? (data.hourlyRate||0) : (data.salary||0))}</div>
+            <div className="w-[80px] px-3 py-1 border-r border-gray-200 text-center">{data.payType === 'hourly' ? (data.hoursWorked||0) : ''}</div>
+            <div className="w-[120px] px-3 py-1 border-r border-gray-200 text-right">{formatCurrency(data.grossPay||0)}</div>
+            <div className="flex-1 px-0 py-0 border-r border-gray-200">
+              <div className="font-bold text-[11px] px-3 py-2 bg-gray-100 border-b border-gray-200">STATUTORY DEDUCTIONS</div>
+              <div className="px-3">
+                <div className="flex border-b border-gray-100 py-1">
+                  <div className="flex-1">FICA - Medicare</div>
+                  <div className="w-[80px] text-right pr-5">{formatCurrency(data.medicare || 0)}</div>
+                  <div className="w-[80px] text-right">{formatCurrency(ytdMedicare || 0)}</div>
+                </div>
+                <div className="flex border-b border-gray-100 py-1">
+                  <div className="flex-1">FICA - Social Security</div>
+                  <div className="w-[80px] text-right pr-5">{formatCurrency(data.socialSecurity || 0)}</div>
+                  <div className="w-[80px] text-right">{formatCurrency(ytdSS || 0)}</div>
+                </div>
+                <div className="flex border-b border-gray-100 py-1">
+                  <div className="flex-1">Federal Tax</div>
+                  <div className="w-[80px] text-right pr-5">{formatCurrency(data.federalTax || 0)}</div>
+                  <div className="w-[80px] text-right">{formatCurrency(ytdFederal || 0)}</div>
+                </div>
+                <div className="flex border-b border-gray-100 py-1">
+                  <div className="flex-1">State Tax</div>
+                  <div className="w-[80px] text-right pr-5">{formatCurrency(data.stateTax || 0)}</div>
+                  <div className="w-[80px] text-right">{formatCurrency(ytdState || 0)}</div>
+                </div>
+                <div className="flex border-b border-gray-100 py-1">
+                  <div className="flex-1">{stateDisabilityLabel}</div>
+                  <div className="w-[80px] text-right pr-5">{formatCurrency(data.stateDisability || 0)}</div>
+                  <div className="w-[80px] text-right">{formatCurrency(ytdSDI || 0)}</div>
+                </div>
+              </div>
+            </div>
+            <div className="w-[80px] px-3 py-1 border-r border-gray-200 text-right"></div>
+            <div className="w-[80px] px-3 py-1 text-right"></div>
           </div>
-          <div className="p-3" style={{ backgroundColor: accent, color: '#fff' }}>
-            <div className="text-xs font-semibold">NET PAY</div>
-            <div className="text-lg font-bold">{formatCurrency(data.netPay)}</div>
+
+          {/* Bottom summary */}
+          <div className="flex bg-gray-200 border-t-2 border-black text-[10px] font-bold">
+            <div className="flex-1 px-3 py-2 text-center">YTD GROSS<br /><span className="text-[11px] font-extrabold">{formatCurrency(ytdGross||0)}</span></div>
+            <div className="flex-1 px-3 py-2 text-center">YTD DEDUCTION<br /><span className="text-[11px] font-extrabold">{formatCurrency(taxesYtd||0)}</span></div>
+            <div className="flex-1 px-3 py-2 text-center">YTD NET PAY<br /><span className="text-[11px] font-extrabold">{formatCurrency(ytdNet||0)}</span></div>
+            <div className="flex-1 px-3 py-2 text-center">TOTAL<br /><span className="text-[11px] font-extrabold">{formatCurrency(data.grossPay||0)}</span></div>
+            <div className="flex-1 px-3 py-2 text-center">DEDUCTION<br /><span className="text-[11px] font-extrabold">{formatCurrency(taxesCurrent||0)}</span></div>
+            <div className="flex-1 px-3 py-2 text-center">NET PAY<br /><span className="text-[11px] font-extrabold">{formatCurrency(data.netPay||0)}</span></div>
           </div>
         </div>
       </div>

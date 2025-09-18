@@ -92,13 +92,11 @@ export function ClassicPreview({ data }: TemplateProps) {
         <div>
           <h3 className="font-bold mb-2 border-b border-gray-400" style={{ color: accent }}>DEDUCTIONS</h3>
           <div className="space-y-1">
-            {data.federalTax > 0 && (<div className="flex justify-between"><span>Federal Tax</span><span>{formatCurrency(data.federalTax)}</span></div>)}
-            {data.stateTax > 0 && (<div className="flex justify-between"><span>State Tax</span><span>{formatCurrency(data.stateTax)}</span></div>)}
-            {data.socialSecurity > 0 && (<div className="flex justify-between"><span>Social Security</span><span>{formatCurrency(data.socialSecurity)}</span></div>)}
-            {data.medicare > 0 && (<div className="flex justify-between"><span>Medicare</span><span>{formatCurrency(data.medicare)}</span></div>)}
-            {((data.stateDisability || 0) > 0 || ['CA','NJ','NY','RI','HI'].includes((data.taxState || '').toUpperCase())) && (
-              <div className="flex justify-between"><span>State Disability</span><span>{formatCurrency(data.stateDisability)}</span></div>
-            )}
+            <div className="flex justify-between"><span>Federal Tax</span><span>{formatCurrency(data.federalTax || 0)}</span></div>
+            <div className="flex justify-between"><span>State Tax</span><span>{formatCurrency(data.stateTax || 0)}</span></div>
+            <div className="flex justify-between"><span>Social Security</span><span>{formatCurrency(data.socialSecurity || 0)}</span></div>
+            <div className="flex justify-between"><span>Medicare</span><span>{formatCurrency(data.medicare || 0)}</span></div>
+            <div className="flex justify-between"><span>{((data.taxState || '').toUpperCase() === 'HI') ? 'TDI' : 'State Disability'}</span><span>{formatCurrency(data.stateDisability || 0)}</span></div>
             <div className="flex justify-between font-bold border-t border-gray-400 pt-1"><span>TOTAL DEDUCTIONS</span><span>{formatCurrency(data.totalDeductions)}</span></div>
           </div>
         </div>

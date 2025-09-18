@@ -1456,7 +1456,7 @@ export function PaystubForm({ data, onUpdate }: PaystubFormProps) {
                     </tr>
                     <tr className="border-b border-gray-200">
                       <td className="p-4 text-sm text-gray-700 border-r border-gray-200 flex items-center gap-2">
-                        SDI
+                        {((data.taxState || '').toUpperCase() === 'HI') ? 'TDI' : 'SDI'}
                       </td>
                       <td className="p-4 border-r border-gray-200">
                         <div className="text-center text-sm font-medium text-gray-700 bg-gray-50 py-2 px-3 rounded">
