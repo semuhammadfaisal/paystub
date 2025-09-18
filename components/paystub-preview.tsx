@@ -31,13 +31,13 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
   // Theme accent color for preview (fallback to existing teal if not provided)
   const accent = data.themeColor || "#239BA0"
 
-  // Modular template routing: if a non-classic template is selected, render it
+  // Modular template routing but always wrap in a capture container
   const selected = (data.templateId || 'template1').toLowerCase()
-  if (selected === 'template2') return <ModernPreview data={data} />
-  if (selected === 'template3') return <DetailedPreview data={data} />
-  if (selected === 'template4') return <CompactPreview data={data} />
-
-  return (
+  let content: React.ReactNode
+  if (selected === 'template2') content = <ModernPreview data={data} />
+  else if (selected === 'template3') content = <DetailedPreview data={data} />
+  else if (selected === 'template4') content = <CompactPreview data={data} />
+  else content = (
     <div className="bg-white border-2 border-gray-300 p-6 text-sm font-mono">
       {/* Header */}
       <div className="border-b-2 border-gray-800 pb-4 mb-4">
@@ -282,6 +282,12 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
         <p>This is a computer-generated payroll statement and does not require a signature.</p>
         <p>Please retain this statement for your records.</p>
       </div>
+    </div>
+  )
+
+  return (
+    <div id="paystub-preview-capture">
+      {content}
     </div>
   )
 }

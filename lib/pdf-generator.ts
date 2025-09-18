@@ -1,5 +1,6 @@
 "use client"
 import { jsPDF } from "jspdf"
+import html2canvas from "html2canvas"
 
 export interface PaystubData {
   // Basic employee and employer info
@@ -21,6 +22,7 @@ export interface PaystubData {
   pay_period_end: string
   pay_date: string
   pay_frequency: string
+  tax_state?: string
 
   // Earnings
   pay_type: "hourly" | "salary"
@@ -68,6 +70,147 @@ export interface PaystubData {
 
 export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
   return new Promise(async (resolve) => {
+    console.log('PDF Generator: Starting PDF generation...')
+    
+    // TEMPORARY: Skip DOM snapshot to test basic functionality
+    const FORCE_FALLBACK = true
+    
+    if (!FORCE_FALLBACK) {
+      // 1) Try to capture the live preview so the PDF matches the on-screen template exactly
+      try {
+        console.log('PDF Generator: Starting DOM snapshot attempt...')
+        
+        // Wait for any React renders to complete
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        const container = document.getElementById("paystub-preview-capture")
+        if (!container) {
+          console.warn('PDF Generator: #paystub-preview-capture not found in DOM, falling back to canvas renderer')
+          console.log('PDF Generator: Available elements with IDs:', Array.from(document.querySelectorAll('[id]')).map(el => el.id))
+          throw new Error('Preview container not found')
+        }
+      
+      console.log('PDF Generator: Found preview container, dimensions:', container.getBoundingClientRect())
+      
+      // Wait a moment for any pending renders
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // Ensure fonts/styles are ready before capture
+      if ((document as any).fonts && typeof (document as any).fonts.ready?.then === 'function') {
+        console.log('PDF Generator: Waiting for fonts to be ready...')
+        try { await (document as any).fonts.ready } catch {}
+        console.log('PDF Generator: Fonts ready')
+      }
+
+        // Build off-screen clone to avoid layout shifts and to inline external images
+        const cloneWrapper = document.createElement('div')
+        cloneWrapper.style.position = 'fixed'
+        cloneWrapper.style.left = '-10000px'
+        cloneWrapper.style.top = '0'
+        cloneWrapper.style.background = '#ffffff'
+        const widthPx = Math.ceil(container.getBoundingClientRect().width || container.scrollWidth || 980)
+        cloneWrapper.style.width = widthPx + 'px'
+        const clone = container.cloneNode(true) as HTMLElement
+        clone.style.width = widthPx + 'px'
+        cloneWrapper.appendChild(clone)
+
+        // Helper: turn external images into data URLs so canvas is never tainted
+        const toDataUrl = async (url: string) => {
+          try {
+            const resp = await fetch(url, { mode: 'cors', cache: 'no-cache' })
+            const blob = await resp.blob()
+            return await new Promise<string>((resolve) => {
+              const fr = new FileReader()
+              fr.onload = () => resolve(fr.result as string)
+              fr.onerror = () => resolve('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==')
+              fr.readAsDataURL(blob)
+            })
+          } catch {
+            // 1x1 transparent gif fallback
+            return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='
+          }
+        }
+
+        const imgs = Array.from(clone.querySelectorAll('img')) as HTMLImageElement[]
+        await Promise.all(imgs.map(async (img) => {
+          try {
+            img.setAttribute('crossorigin', 'anonymous')
+            const src = img.getAttribute('src') || ''
+            if (src && !src.startsWith('data:')) {
+              const dataUrl = await toDataUrl(src)
+              img.setAttribute('src', dataUrl)
+            }
+          } catch {
+            // If anything fails, blank the image to avoid taint
+            img.setAttribute('src', 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==')
+          }
+        }))
+
+        document.body.appendChild(cloneWrapper)
+        console.log('PDF Generator: Clone created and added to DOM, starting html2canvas...')
+
+        const scale = Math.max(2, (window.devicePixelRatio || 1))
+        const previewCanvas = await html2canvas(clone, {
+          scale,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false,
+          foreignObjectRendering: true,
+          windowWidth: clone.scrollWidth,
+          windowHeight: clone.scrollHeight,
+          removeContainer: true,
+        })
+
+        // Clean up clone
+        document.body.removeChild(cloneWrapper)
+        console.log('PDF Generator: html2canvas completed successfully, canvas size:', previewCanvas.width, 'x', previewCanvas.height)
+
+        const pdf = new jsPDF({ unit: "pt", format: "letter", compress: true })
+        const pageWidth = pdf.internal.pageSize.getWidth()
+        const pageHeight = pdf.internal.pageSize.getHeight()
+        const marginX = 24
+        const marginY = 24
+        const usableWidthPt = pageWidth - marginX * 2
+        const usableHeightPt = pageHeight - marginY * 2
+
+        // Calculate scaling so the image fills the width; we'll paginate by height.
+        const cW = previewCanvas.width
+        const cH = previewCanvas.height
+        const ptPerPx = usableWidthPt / cW
+        const pageSliceHeightPx = Math.floor(usableHeightPt / ptPerPx)
+
+        let offsetPx = 0
+        let pageIndex = 0
+        while (offsetPx < cH) {
+          const sliceHeightPx = Math.min(pageSliceHeightPx, cH - offsetPx)
+          // Create a slice canvas
+          const sliceCanvas = document.createElement('canvas')
+          sliceCanvas.width = cW
+          sliceCanvas.height = sliceHeightPx
+          const sctx = sliceCanvas.getContext('2d')!
+          sctx.drawImage(previewCanvas, 0, offsetPx, cW, sliceHeightPx, 0, 0, cW, sliceHeightPx)
+
+          const sliceImg = sliceCanvas.toDataURL('image/png', 1.0)
+          const sliceHeightPt = sliceHeightPx * ptPerPx
+
+          if (pageIndex > 0) pdf.addPage()
+          pdf.addImage(sliceImg, 'PNG', marginX, marginY, usableWidthPt, sliceHeightPt)
+
+          offsetPx += sliceHeightPx
+          pageIndex += 1
+        }
+
+        const pdfBlob = pdf.output('blob') as Blob
+        console.log('PDF Generator: PDF generated successfully via DOM snapshot')
+        resolve(pdfBlob)
+        return
+      } catch (err) {
+        // If capture fails, fall back to the existing canvas-based generator below
+        console.warn("PDF Generator: Preview capture failed; falling back to canvas renderer.", err)
+      }
+    }
+
+    // 2) Fallback: previous programmatic canvas renderer (classic-like layout)
     const canvas = document.createElement("canvas")
     const ctx = canvas.getContext("2d")!
 
@@ -379,12 +522,13 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
     
     let deductionsY = y + 30
     
+    const sdiLabel = ((data.tax_state || '').toUpperCase() === 'HI') ? 'TDI' : 'State Disability'
     const deductions = [
       { label: "Federal Tax", amount: data.federal_tax },
       { label: "State Tax", amount: data.state_tax },
       { label: "Social Security", amount: data.social_security },
       { label: "Medicare", amount: data.medicare },
-      { label: "State Disability", amount: data.state_disability },
+      { label: sdiLabel, amount: data.state_disability },
       { label: "Health Insurance", amount: data.health_insurance },
       { label: "Dental Insurance", amount: data.dental_insurance },
       { label: "Vision Insurance", amount: data.vision_insurance },

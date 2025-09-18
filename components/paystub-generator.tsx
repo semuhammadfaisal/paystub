@@ -424,6 +424,10 @@ export function PaystubGenerator({ user, initialTemplateId }: PaystubGeneratorPr
   }
 
   const handleDownload = async () => {
+    console.log('=== DOWNLOAD BUTTON CLICKED ===')
+    console.log('Employee name:', paystubData.employeeName)
+    console.log('Company name:', paystubData.companyName)
+    
     if (!paystubData.employeeName || !paystubData.companyName) {
       alert("Please fill in at least employee name and company name")
       return
@@ -432,6 +436,8 @@ export function PaystubGenerator({ user, initialTemplateId }: PaystubGeneratorPr
     setIsDownloading(true)
     try {
       console.log('Starting PDF generation...')
+      console.log('Selected template ID:', paystubData.templateId)
+      console.log('Preview container exists:', !!document.getElementById('paystub-preview-capture'))
       console.log('Logo data in component:', paystubData.companyLogo ? 'Present' : 'Not present')
       if (paystubData.companyLogo) {
         console.log('Logo data length:', paystubData.companyLogo.length)
@@ -593,7 +599,16 @@ export function PaystubGenerator({ user, initialTemplateId }: PaystubGeneratorPr
           <Save className="w-4 h-4 mr-2" />
           {isSaving ? "Saving..." : "Save Paystub"}
         </Button>
-        <Button onClick={handleDownload} disabled={isDownloading} variant="outline">
+        <Button 
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            handleDownload()
+          }} 
+          disabled={isDownloading} 
+          variant="outline"
+          type="button"
+        >
           <Download className="w-4 h-4 mr-2" />
           {isDownloading ? "Generating..." : "Download PDF"}
         </Button>
