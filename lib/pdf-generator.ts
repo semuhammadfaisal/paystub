@@ -72,8 +72,8 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
   return new Promise(async (resolve) => {
     console.log('PDF Generator: Starting PDF generation...')
     
-    // TEMPORARY: Skip DOM snapshot to test basic functionality
-    const FORCE_FALLBACK = true
+    // Use DOM snapshot of the on-screen preview when available so the PDF matches the selected template
+    const FORCE_FALLBACK = false
     
     if (!FORCE_FALLBACK) {
       // 1) Try to capture the live preview so the PDF matches the on-screen template exactly
