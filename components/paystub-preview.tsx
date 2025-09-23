@@ -286,8 +286,28 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
   )
 
   return (
-    <div id="paystub-preview-capture">
-      {content}
-    </div>
+    <>
+      {/* Visible on-screen preview */}
+      <div id="paystub-preview-capture">
+        {content}
+      </div>
+      {/* Off-screen duplicate strictly for capture to improve reliability */}
+      <div
+        id="paystub-capture-snapshot"
+        style={{
+          position: 'fixed',
+          left: '-10000px',
+          top: 0,
+          width: '800px',
+          background: '#ffffff',
+          padding: 0,
+          margin: 0,
+          zIndex: -1,
+          visibility: 'visible',
+        }}
+      >
+        {content}
+      </div>
+    </>
   )
 }

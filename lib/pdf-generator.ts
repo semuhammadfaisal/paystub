@@ -14,6 +14,8 @@ export interface PaystubData {
   employer_ein: string
   employer_phone?: string
   employer_logo?: string
+  // Template selection
+  templateId: string
   // Theme
   theme_color?: string
 
@@ -69,13 +71,14 @@ export interface PaystubData {
 }
 
 export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
-  return new Promise(async (resolve) => {
+  return new Promise(async (resolve, reject) => {
     console.log('PDF Generator: Starting PDF generation...')
     
-    // Use DOM snapshot of the on-screen preview when available so the PDF matches the selected template
-    const FORCE_FALLBACK = false
+    // Use DOM snapshot of the on-screen preview so the PDF matches the selected template exactly.
+    // In strict mode, if capture fails, do NOT fallback to an alternate layout — instead, surface an error.
+    const STRICT_MATCH = true
     
-    if (!FORCE_FALLBACK) {
+    if (true) {
       // 1) Try to capture the live preview so the PDF matches the on-screen template exactly
       try {
         console.log('PDF Generator: Starting DOM snapshot attempt...')
@@ -83,14 +86,44 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
         // Wait for any React renders to complete
         await new Promise(resolve => setTimeout(resolve, 500))
         
-        const container = document.getElementById("paystub-preview-capture")
+        // Retry helper to wait for preview container to mount
+        const waitForElement = async (ids: string[], timeoutMs = 2500, intervalMs = 100): Promise<HTMLElement | null> => {
+          const start = Date.now()
+          while (Date.now() - start < timeoutMs) {
+            for (const id of ids) {
+              const el = document.getElementById(id)
+              if (el) return el as HTMLElement
+            }
+            await new Promise(r => setTimeout(r, intervalMs))
+          }
+          return null
+        }
+
+        const container = await waitForElement(["paystub-capture-snapshot", "paystub-capture-target", "paystub-preview-capture"])
         if (!container) {
-          console.warn('PDF Generator: #paystub-preview-capture not found in DOM, falling back to canvas renderer')
+          console.warn('PDF Generator: Capture target not found in DOM. Strict match enabled; aborting.')
           console.log('PDF Generator: Available elements with IDs:', Array.from(document.querySelectorAll('[id]')).map(el => el.id))
           throw new Error('Preview container not found')
         }
+        console.log('PDF Generator: Using capture element with id:', container.id)
+        console.log('PDF Generator: Capture element dimensions:', container.getBoundingClientRect())
+        console.log('PDF Generator: Capture element visibility:', getComputedStyle(container).visibility)
+        console.log('PDF Generator: Capture element display:', getComputedStyle(container).display)
+        // Determine which element to capture based on container type
+        let primaryCaptureEl: HTMLElement
+        if (container.id === 'paystub-capture-snapshot') {
+          // Use the snapshot directly - it already contains the rendered template
+          primaryCaptureEl = container
+        } else if (container.id === 'paystub-capture-target') {
+          // Use the target directly - this is the main content area
+          primaryCaptureEl = container
+        } else {
+          // For paystub-preview-capture, look for the inner target element
+          primaryCaptureEl = (container.querySelector('#paystub-capture-target') as HTMLElement) || container
+        }
+        console.log('PDF Generator: Using capture element with id:', primaryCaptureEl.id || container.id)
       
-      console.log('PDF Generator: Found preview container, dimensions:', container.getBoundingClientRect())
+      console.log('PDF Generator: Found preview container, dimensions:', primaryCaptureEl.getBoundingClientRect())
       
       // Wait a moment for any pending renders
       await new Promise(resolve => setTimeout(resolve, 100))
@@ -103,16 +136,68 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
       }
 
         // Build off-screen clone to avoid layout shifts and to inline external images
-        const cloneWrapper = document.createElement('div')
+        let cloneWrapper: HTMLDivElement | null = null
+        cloneWrapper = document.createElement('div')
         cloneWrapper.style.position = 'fixed'
         cloneWrapper.style.left = '-10000px'
         cloneWrapper.style.top = '0'
         cloneWrapper.style.background = '#ffffff'
-        const widthPx = Math.ceil(container.getBoundingClientRect().width || container.scrollWidth || 980)
+        let widthPx = Math.ceil(primaryCaptureEl.getBoundingClientRect().width || primaryCaptureEl.scrollWidth || 980)
+        if (!widthPx || widthPx < 100) widthPx = 800
         cloneWrapper.style.width = widthPx + 'px'
-        const clone = container.cloneNode(true) as HTMLElement
+        const clone = primaryCaptureEl.cloneNode(true) as HTMLElement
         clone.style.width = widthPx + 'px'
         cloneWrapper.appendChild(clone)
+
+        // Sanitize clone: remove decorative overlays and complex backgrounds that can cause capture failures
+        try {
+          let removed = 0
+          const allEls = Array.from(clone.querySelectorAll('*')) as HTMLElement[]
+          for (const el of allEls) {
+            const text = (el.textContent || '').trim().toUpperCase()
+            const style = (el as HTMLElement).style
+            const bgImg = style?.backgroundImage || ''
+            const pos = style?.position || ''
+            // Remove watermark-like overlays and grid backgrounds
+            if (
+              (text === 'PREVIEW' && pos === 'absolute') ||
+              (bgImg.includes('repeating-linear-gradient') && (pos === 'absolute' || pos === 'fixed'))
+            ) {
+              el.remove()
+              removed++
+            }
+          }
+          if (removed > 0) {
+            console.log('PDF Generator: Sanitized clone DOM, removed nodes:', removed)
+          }
+        } catch (e) {
+          console.warn('PDF Generator: Sanitization step failed (continuing):', e)
+        }
+
+        // Additional sanitization: replace unsupported color functions like oklch() with computed RGB values
+        try {
+          const colorProps = [
+            'color', 'backgroundColor',
+            'borderColor', 'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor',
+            'outlineColor', 'textDecorationColor', 'columnRuleColor'
+          ] as const
+          const nodes = [clone, ...Array.from(clone.querySelectorAll('*')) as HTMLElement[]]
+          for (const node of nodes) {
+            const el = node as HTMLElement
+            const styleAttr = (el.getAttribute('style') || '').toLowerCase()
+            const cs = getComputedStyle(el)
+            const bgImgCs = (cs.backgroundImage || '').toLowerCase()
+            const needsFix = styleAttr.includes('oklch(') || bgImgCs.includes('oklch(')
+            if (needsFix) {
+              for (const prop of colorProps) {
+                try { (el.style as any)[prop] = (cs as any)[prop] } catch {}
+              }
+              try { el.style.backgroundImage = 'none' } catch {}
+            }
+          }
+        } catch (e) {
+          console.warn('PDF Generator: Color sanitization failed (continuing):', e)
+        }
 
         // Helper: turn external images into data URLs so canvas is never tainted
         const toDataUrl = async (url: string) => {
@@ -150,20 +235,41 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
         console.log('PDF Generator: Clone created and added to DOM, starting html2canvas...')
 
         const scale = Math.max(2, (window.devicePixelRatio || 1))
-        const previewCanvas = await html2canvas(clone, {
-          scale,
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          logging: false,
-          foreignObjectRendering: true,
-          windowWidth: clone.scrollWidth,
-          windowHeight: clone.scrollHeight,
-          removeContainer: true,
-        })
+        console.log('PDF Generator: Starting html2canvas with scale:', scale)
+        console.log('PDF Generator: Clone dimensions before capture:', clone.scrollWidth, 'x', clone.scrollHeight)
 
-        // Clean up clone
-        document.body.removeChild(cloneWrapper)
-        console.log('PDF Generator: html2canvas completed successfully, canvas size:', previewCanvas.width, 'x', previewCanvas.height)
+        let previewCanvas
+        try {
+          previewCanvas = await html2canvas(clone, {
+            scale,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: true,
+            imageTimeout: 0,
+            ignoreElements: (el) => {
+              try {
+                const e = el as HTMLElement
+                if (e?.getAttribute && e.getAttribute('data-decorative') === 'true') return true
+                const cs = getComputedStyle(e)
+                const bgImg = cs?.backgroundImage || ''
+                const pos = cs?.position || ''
+                if (bgImg.includes('repeating-linear-gradient') && (pos === 'absolute' || pos === 'fixed')) return true
+              } catch {}
+              return false
+            },
+            windowWidth: clone.scrollWidth,
+            windowHeight: clone.scrollHeight,
+            removeContainer: true,
+          })
+          console.log('PDF Generator: html2canvas completed successfully, canvas size:', previewCanvas.width, 'x', previewCanvas.height)
+          // Guard: if the canvas is zero-sized, treat as failure so we fall back to in-place capture
+          if (!previewCanvas.width || !previewCanvas.height) {
+            throw new Error('Clone capture produced zero-sized canvas')
+          }
+        } catch (error) {
+          console.error('PDF Generator: html2canvas failed:', error)
+          throw new Error(`html2canvas capture failed: ${error}`)
+        }
 
         const pdf = new jsPDF({ unit: "pt", format: "letter", compress: true })
         const pageWidth = pdf.internal.pageSize.getWidth()
@@ -202,11 +308,345 @@ export function generatePaystubPDF(data: PaystubData): Promise<Blob> {
 
         const pdfBlob = pdf.output('blob') as Blob
         console.log('PDF Generator: PDF generated successfully via DOM snapshot')
+        try { if (cloneWrapper && cloneWrapper.parentNode) cloneWrapper.parentNode.removeChild(cloneWrapper) } catch {}
         resolve(pdfBlob)
         return
       } catch (err) {
-        // If capture fails, fall back to the existing canvas-based generator below
-        console.warn("PDF Generator: Preview capture failed; falling back to canvas renderer.", err)
+        console.warn("PDF Generator: DOM clone capture failed; retrying with in-place capture...", err)
+        try { const el = (document.getElementById('paystub-capture-snapshot') as HTMLDivElement | null); if (el && el.parentNode) el.parentNode.removeChild(el) } catch {}
+        try {
+          // Second attempt: capture the original element in place
+          const container2 = (document.getElementById('paystub-capture-snapshot') || document.getElementById('paystub-capture-target') || document.getElementById('paystub-preview-capture')) as HTMLElement | null
+          if (!container2) throw new Error('Preview container not found on retry')
+
+          // Determine which element to capture based on container type
+          let primaryCaptureEl2: HTMLElement
+          if (container2.id === 'paystub-capture-snapshot') {
+            primaryCaptureEl2 = container2
+          } else if (container2.id === 'paystub-capture-target') {
+            primaryCaptureEl2 = container2
+          } else {
+            primaryCaptureEl2 = (container2.querySelector('#paystub-capture-target') as HTMLElement) || container2
+          }
+
+          // Ensure fonts/styles are ready before capture
+          if ((document as any).fonts && typeof (document as any).fonts.ready?.then === 'function') {
+            try { await (document as any).fonts.ready } catch {}
+          }
+
+          // Ensure the element is in view to avoid cases where layout yields zero size
+          try { container2.scrollIntoView({ block: 'center', inline: 'nearest' }) } catch {}
+          // Small wait in case of last-moment renders
+          await new Promise(resolve => setTimeout(resolve, 200))
+
+          // Temporarily adjust container styles for stable layout during capture
+          const prevContainer2 = {
+            position: primaryCaptureEl2.style.position || '',
+            transform: primaryCaptureEl2.style.transform || '',
+            background: primaryCaptureEl2.style.background || '',
+          }
+          primaryCaptureEl2.style.position = 'static'
+          primaryCaptureEl2.style.transform = 'none'
+          primaryCaptureEl2.style.background = '#ffffff'
+
+          // Temporarily hide decorative overlays (watermark, grid backgrounds)
+          const hiddenEls: Array<{ el: HTMLElement, prevDisplay: string | null }> = []
+          try {
+            const els = Array.from(primaryCaptureEl2.querySelectorAll('*')) as HTMLElement[]
+            for (const el of els) {
+              const cs = getComputedStyle(el)
+              const text = (el.textContent || '').trim().toUpperCase()
+              const bgImg = cs.backgroundImage || ''
+              const pos = cs.position || ''
+              if (
+                (text === 'PREVIEW' && pos === 'absolute') ||
+                (bgImg.includes('repeating-linear-gradient') && (pos === 'absolute' || pos === 'fixed'))
+              ) {
+                hiddenEls.push({ el, prevDisplay: el.style.display || null })
+                el.style.display = 'none'
+              }
+            }
+          } catch {}
+
+          // Inline images within the original container to prevent canvas taint
+          const toDataUrl2 = async (url: string) => {
+            try {
+              const resp = await fetch(url, { mode: 'cors', cache: 'no-cache' })
+              const blob = await resp.blob()
+              return await new Promise<string>((resolve) => {
+                const fr = new FileReader()
+                fr.onload = () => resolve(fr.result as string)
+                fr.onerror = () => resolve('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==')
+                fr.readAsDataURL(blob)
+              })
+            } catch {
+              return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='
+            }
+          }
+
+          const imgs2 = Array.from(primaryCaptureEl2.querySelectorAll('img')) as HTMLImageElement[]
+          const originalSrcs: Array<{ el: HTMLImageElement, src: string | null }> = imgs2.map(el => ({ el, src: el.getAttribute('src') }))
+          try {
+            await Promise.all(imgs2.map(async (img) => {
+              try {
+                img.setAttribute('crossorigin', 'anonymous')
+                const src = img.getAttribute('src') || ''
+                if (src && !src.startsWith('data:')) {
+                  const dataUrl = await toDataUrl2(src)
+                  img.setAttribute('src', dataUrl)
+                }
+              } catch {
+                img.setAttribute('src', 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==')
+              }
+            }))
+          } catch {}
+
+          const scale2 = Math.max(2, (window.devicePixelRatio || 1))
+          const inPlaceCanvas = await html2canvas(primaryCaptureEl2, {
+            scale: scale2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            foreignObjectRendering: true,
+            imageTimeout: 0,
+            ignoreElements: (el) => {
+              try {
+                const e = el as HTMLElement
+                if (e?.getAttribute && e.getAttribute('data-decorative') === 'true') return true
+                const cs = getComputedStyle(e)
+                const bgImg = cs?.backgroundImage || ''
+                const pos = cs?.position || ''
+                if (bgImg.includes('repeating-linear-gradient') && (pos === 'absolute' || pos === 'fixed')) return true
+              } catch {}
+              return false
+            },
+            windowWidth: primaryCaptureEl2.scrollWidth,
+            windowHeight: primaryCaptureEl2.scrollHeight,
+            removeContainer: true,
+          })
+
+          // Restore original image sources
+          for (const { el, src } of originalSrcs) {
+            if (src) el.setAttribute('src', src)
+          }
+          // Restore hidden decorative elements
+          for (const h of hiddenEls) {
+            if (h.prevDisplay !== null) h.el.style.display = h.prevDisplay
+            else h.el.style.removeProperty('display')
+          }
+          // Restore container styles
+          primaryCaptureEl2.style.position = prevContainer2.position
+          primaryCaptureEl2.style.transform = prevContainer2.transform
+          primaryCaptureEl2.style.background = prevContainer2.background
+
+          const pdf = new jsPDF({ unit: "pt", format: "letter", compress: true })
+          const pageWidth = pdf.internal.pageSize.getWidth()
+          const pageHeight = pdf.internal.pageSize.getHeight()
+          const marginX = 24
+          const marginY = 24
+          const usableWidthPt = pageWidth - marginX * 2
+          const usableHeightPt = pageHeight - marginY * 2
+
+          const cW = inPlaceCanvas.width
+          const cH = inPlaceCanvas.height
+          if (!cW || !cH) throw new Error('Preview has zero dimensions; is it hidden?')
+          const ptPerPx = usableWidthPt / cW
+          const pageSliceHeightPx = Math.floor(usableHeightPt / ptPerPx)
+
+          let offsetPx = 0
+          let pageIndex = 0
+          while (offsetPx < cH) {
+            const sliceHeightPx = Math.min(pageSliceHeightPx, cH - offsetPx)
+            const sliceCanvas = document.createElement('canvas')
+            sliceCanvas.width = cW
+            sliceCanvas.height = sliceHeightPx
+            const sctx = sliceCanvas.getContext('2d')!
+            sctx.drawImage(inPlaceCanvas, 0, offsetPx, cW, sliceHeightPx, 0, 0, cW, sliceHeightPx)
+
+            const sliceImg = sliceCanvas.toDataURL('image/png', 1.0)
+            const sliceHeightPt = sliceHeightPx * ptPerPx
+
+            if (pageIndex > 0) pdf.addPage()
+            pdf.addImage(sliceImg, 'PNG', marginX, marginY, usableWidthPt, sliceHeightPt)
+
+            offsetPx += sliceHeightPx
+            pageIndex += 1
+          }
+
+          const pdfBlob = pdf.output('blob') as Blob
+          console.log('PDF Generator: PDF generated successfully via in-place DOM capture')
+          resolve(pdfBlob)
+          return
+        } catch (err2) {
+          console.warn('PDF Generator: In-place capture also failed.', err2)
+          // Third attempt: in-place capture with alternate html2canvas options
+          try {
+            const container3 = (document.getElementById('paystub-capture-snapshot') || document.getElementById('paystub-capture-target') || document.getElementById('paystub-preview-capture')) as HTMLElement | null
+            if (!container3) throw new Error('Preview container not found on alt retry')
+
+            // Determine which element to capture based on container type
+            let primaryCaptureEl3: HTMLElement
+            if (container3.id === 'paystub-capture-snapshot') {
+              primaryCaptureEl3 = container3
+            } else if (container3.id === 'paystub-capture-target') {
+              primaryCaptureEl3 = container3
+            } else {
+              primaryCaptureEl3 = (container3.querySelector('#paystub-capture-target') as HTMLElement) || container3
+            }
+
+            // Ensure visible and scrolled into view
+            container3.style.visibility = 'visible'
+            try { container3.scrollIntoView({ block: 'center', inline: 'nearest' }) } catch {}
+            await new Promise(resolve => setTimeout(resolve, 150))
+
+            // Temporarily adjust container styles for stable layout during capture
+            const prevContainer3 = {
+              position: primaryCaptureEl3.style.position || '',
+              transform: primaryCaptureEl3.style.transform || '',
+              background: primaryCaptureEl3.style.background || '',
+            }
+            primaryCaptureEl3.style.position = 'static'
+            primaryCaptureEl3.style.transform = 'none'
+            primaryCaptureEl3.style.background = '#ffffff'
+
+            // Temporarily hide decorative overlays
+            const hiddenEls3: Array<{ el: HTMLElement, prevDisplay: string | null }> = []
+            try {
+              const els3 = Array.from(primaryCaptureEl3.querySelectorAll('*')) as HTMLElement[]
+              for (const el of els3) {
+                const cs = getComputedStyle(el)
+                const text = (el.textContent || '').trim().toUpperCase()
+                const bgImg = cs.backgroundImage || ''
+                const pos = cs.position || ''
+                if (
+                  (text === 'PREVIEW' && pos === 'absolute') ||
+                  (bgImg.includes('repeating-linear-gradient') && (pos === 'absolute' || pos === 'fixed'))
+                ) {
+                  hiddenEls3.push({ el, prevDisplay: el.style.display || null })
+                  el.style.display = 'none'
+                }
+              }
+            } catch {}
+
+            // Inline images again to be safe
+            const imgs3 = Array.from(primaryCaptureEl3.querySelectorAll('img')) as HTMLImageElement[]
+            const originalSrcs3: Array<{ el: HTMLImageElement, src: string | null }> = imgs3.map(el => ({ el, src: el.getAttribute('src') }))
+            const toDataUrl3 = async (url: string) => {
+              try {
+                const resp = await fetch(url, { mode: 'cors', cache: 'no-cache' })
+                const blob = await resp.blob()
+                return await new Promise<string>((resolve) => {
+                  const fr = new FileReader()
+                  fr.onload = () => resolve(fr.result as string)
+                  fr.onerror = () => resolve('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==')
+                  fr.readAsDataURL(blob)
+                })
+              } catch {
+                return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='
+              }
+            }
+            try {
+              await Promise.all(imgs3.map(async (img) => {
+                try {
+                  img.setAttribute('crossorigin', 'anonymous')
+                  const src = img.getAttribute('src') || ''
+                  if (src && !src.startsWith('data:')) {
+                    const dataUrl = await toDataUrl3(src)
+                    img.setAttribute('src', dataUrl)
+                  }
+                } catch {
+                  img.setAttribute('src', 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==')
+                }
+              }))
+            } catch {}
+
+            const scale3 = Math.max(2, (window.devicePixelRatio || 1))
+            const altCanvas = await html2canvas(primaryCaptureEl3, {
+              scale: scale3,
+              useCORS: true,
+              allowTaint: true,
+              backgroundColor: '#ffffff',
+              logging: false,
+              foreignObjectRendering: false, // alternate renderer
+              scrollX: 0,
+              scrollY: -window.scrollY,
+              imageTimeout: 0,
+              ignoreElements: (el) => {
+                try {
+                  const e = el as HTMLElement
+                  if (e?.getAttribute && e.getAttribute('data-decorative') === 'true') return true
+                  const cs = getComputedStyle(e)
+                  const bgImg = cs?.backgroundImage || ''
+                  const pos = cs?.position || ''
+                  if (bgImg.includes('repeating-linear-gradient') && (pos === 'absolute' || pos === 'fixed')) return true
+                } catch {}
+                return false
+              },
+              windowWidth: primaryCaptureEl3.scrollWidth,
+              windowHeight: primaryCaptureEl3.scrollHeight,
+              removeContainer: true,
+            } as any)
+
+            // Restore original image sources
+            for (const { el, src } of originalSrcs3) {
+              if (src) el.setAttribute('src', src)
+            }
+            // Restore hidden decorative elements
+            for (const h of hiddenEls3) {
+              if (h.prevDisplay !== null) h.el.style.display = h.prevDisplay
+              else h.el.style.removeProperty('display')
+            }
+            // Restore container styles
+            primaryCaptureEl3.style.position = prevContainer3.position
+            primaryCaptureEl3.style.transform = prevContainer3.transform
+            primaryCaptureEl3.style.background = prevContainer3.background
+
+            const pdf = new jsPDF({ unit: 'pt', format: 'letter', compress: true })
+            const pageWidth = pdf.internal.pageSize.getWidth()
+            const pageHeight = pdf.internal.pageSize.getHeight()
+            const marginX = 24
+            const marginY = 24
+            const usableWidthPt = pageWidth - marginX * 2
+            const usableHeightPt = pageHeight - marginY * 2
+
+            const cW = altCanvas.width
+            const cH = altCanvas.height
+            if (!cW || !cH) throw new Error('Alternate capture produced zero size')
+            const ptPerPx = usableWidthPt / cW
+            const pageSliceHeightPx = Math.floor(usableHeightPt / ptPerPx)
+
+            let offsetPx = 0
+            let pageIndex = 0
+            while (offsetPx < cH) {
+              const sliceHeightPx = Math.min(pageSliceHeightPx, cH - offsetPx)
+              const sliceCanvas = document.createElement('canvas')
+              sliceCanvas.width = cW
+              sliceCanvas.height = sliceHeightPx
+              const sctx = sliceCanvas.getContext('2d')!
+              sctx.drawImage(altCanvas, 0, offsetPx, cW, sliceHeightPx, 0, 0, cW, sliceHeightPx)
+
+              const sliceImg = sliceCanvas.toDataURL('image/png', 1.0)
+              const sliceHeightPt = sliceHeightPx * ptPerPx
+
+              if (pageIndex > 0) pdf.addPage()
+              pdf.addImage(sliceImg, 'PNG', marginX, marginY, usableWidthPt, sliceHeightPt)
+
+              offsetPx += sliceHeightPx
+              pageIndex += 1
+            }
+
+            const pdfBlob = pdf.output('blob') as Blob
+            console.log('PDF Generator: PDF generated successfully via alternate in-place capture')
+            resolve(pdfBlob)
+            return
+          } catch (err3) {
+            console.warn('PDF Generator: Alternate in-place capture also failed.', err3)
+            if (STRICT_MATCH) {
+              return reject(new Error('Could not capture the on-screen preview for PDF after multiple attempts. Please ensure the preview is visible, avoid external blocked images, and try again.'))
+            }
+          }
+          // Non-strict mode would fall back to the programmatic renderer below
+        }
       }
     }
 

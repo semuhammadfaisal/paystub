@@ -8,9 +8,10 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Save, Download } from "lucide-react"
 import { savePaystub } from "@/lib/actions"
-import { generatePaystubPDF, downloadPDF } from "@/lib/pdf-generator"
 import { StepHeader } from "@/components/step-header"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { generatePaystubPDF, downloadPDF } from "@/lib/pdf-generator"
+import { DownloadHtmlFileButton } from "@/components/download-html-file-button"
 
 export interface PaystubData {
   // Template Selection
@@ -423,11 +424,81 @@ export function PaystubGenerator({ user, initialTemplateId }: PaystubGeneratorPr
     }
   }
 
+  // Prepare PDF data for React-PDF component
+  const pdfData = {
+    // Template selection
+    templateId: paystubData.templateId,
+
+    // Basic employee and employer info
+    employee_name: paystubData.employeeName,
+    employee_address: `${paystubData.employeeAddress}, ${paystubData.employeeCity}, ${paystubData.employeeState} ${paystubData.employeeZip}`,
+    employee_ssn: paystubData.employeeSSN,
+    employee_id: paystubData.employeeId,
+    employee_phone: paystubData.employeePhone,
+    employer_name: paystubData.companyName,
+    employer_address: `${paystubData.companyAddress}, ${paystubData.companyCity}, ${paystubData.companyState} ${paystubData.companyZip}`,
+    employer_ein: paystubData.companyEIN,
+    employer_phone: paystubData.companyPhone,
+    employer_logo: paystubData.companyLogo,
+    theme_color: paystubData.themeColor,
+
+    // Pay period details
+    pay_period_start: paystubData.payPeriodStart,
+    pay_period_end: paystubData.payPeriodEnd,
+    pay_date: paystubData.payDate,
+    pay_frequency: paystubData.payFrequency,
+
+    // Earnings
+    pay_type: paystubData.payType,
+    hourly_rate: paystubData.hourlyRate,
+    hours_worked: paystubData.hoursWorked,
+    overtime_hours: paystubData.overtimeHours,
+    overtime_rate: paystubData.overtimeRate,
+    salary: paystubData.salary,
+    bonus: paystubData.bonusAmount,
+    commission: paystubData.commissionAmount,
+    holiday_hours: paystubData.holidayHours,
+    sick_hours: paystubData.sickHours,
+    vacation_hours: paystubData.vacationHours,
+
+    // Deductions
+    federal_tax: paystubData.federalTax,
+    state_tax: paystubData.stateTax,
+    social_security: paystubData.socialSecurity,
+    medicare: paystubData.medicare,
+    state_disability: paystubData.stateDisability,
+    health_insurance: paystubData.healthInsurance,
+    dental_insurance: paystubData.dentalInsurance,
+    vision_insurance: paystubData.visionInsurance,
+    life_insurance: paystubData.lifeInsurance,
+    retirement_401k: paystubData.retirement401k,
+    roth_ira: paystubData.rothIRA,
+    hsa: paystubData.hsa,
+    parking_fee: paystubData.parkingFee,
+    union_dues: paystubData.unionDues,
+    other_deductions: paystubData.otherDeductions,
+
+    // Year-to-Date totals
+    ytd_gross_pay: paystubData.ytdGrossPay,
+    ytd_federal_tax: paystubData.ytdFederalTax,
+    ytd_state_tax: paystubData.ytdStateTax,
+    ytd_social_security: paystubData.ytdSocialSecurity,
+    ytd_medicare: paystubData.ytdMedicare,
+    ytd_overtime_pay: paystubData.ytdOvertimePay,
+    ytd_total_deductions: paystubData.ytdTotalDeductions,
+    ytd_net_pay: paystubData.ytdNetPay,
+
+    // Calculated fields
+    gross_pay: paystubData.grossPay,
+    total_deductions: paystubData.totalDeductions,
+    net_pay: paystubData.netPay,
+  }
+
   const handleDownload = async () => {
     console.log('=== DOWNLOAD BUTTON CLICKED ===')
     console.log('Employee name:', paystubData.employeeName)
     console.log('Company name:', paystubData.companyName)
-    
+
     if (!paystubData.employeeName || !paystubData.companyName) {
       alert("Please fill in at least employee name and company name")
       return
@@ -437,87 +508,14 @@ export function PaystubGenerator({ user, initialTemplateId }: PaystubGeneratorPr
     try {
       console.log('Starting PDF generation...')
       console.log('Selected template ID:', paystubData.templateId)
-      console.log('Preview container exists:', !!document.getElementById('paystub-preview-capture'))
-      console.log('Logo data in component:', paystubData.companyLogo ? 'Present' : 'Not present')
-      if (paystubData.companyLogo) {
-        console.log('Logo data length:', paystubData.companyLogo.length)
-        console.log('Logo data preview:', paystubData.companyLogo.substring(0, 50))
-      }
-      
-      const pdfData = {
-        // Basic employee and employer info
-        employee_name: paystubData.employeeName,
-        employee_address: `${paystubData.employeeAddress}, ${paystubData.employeeCity}, ${paystubData.employeeState} ${paystubData.employeeZip}`,
-        employee_ssn: paystubData.employeeSSN,
-        employee_id: paystubData.employeeId,
-        employee_phone: paystubData.employeePhone,
-        employer_name: paystubData.companyName,
-        employer_address: `${paystubData.companyAddress}, ${paystubData.companyCity}, ${paystubData.companyState} ${paystubData.companyZip}`,
-        employer_ein: paystubData.companyEIN,
-        employer_phone: paystubData.companyPhone,
-        employer_logo: paystubData.companyLogo,
-        theme_color: paystubData.themeColor,
-
-        // Pay period details
-        pay_period_start: paystubData.payPeriodStart,
-        pay_period_end: paystubData.payPeriodEnd,
-        pay_date: paystubData.payDate,
-        pay_frequency: paystubData.payFrequency,
-
-        // Earnings
-        pay_type: paystubData.payType,
-        hourly_rate: paystubData.hourlyRate,
-        hours_worked: paystubData.hoursWorked,
-        overtime_hours: paystubData.overtimeHours,
-        overtime_rate: paystubData.overtimeRate,
-        salary: paystubData.salary,
-        bonus: paystubData.bonusAmount,
-        commission: paystubData.commissionAmount,
-        holiday_hours: paystubData.holidayHours,
-        sick_hours: paystubData.sickHours,
-        vacation_hours: paystubData.vacationHours,
-
-        // Deductions
-        federal_tax: paystubData.federalTax,
-        state_tax: paystubData.stateTax,
-        social_security: paystubData.socialSecurity,
-        medicare: paystubData.medicare,
-        state_disability: paystubData.stateDisability,
-        health_insurance: paystubData.healthInsurance,
-        dental_insurance: paystubData.dentalInsurance,
-        vision_insurance: paystubData.visionInsurance,
-        life_insurance: paystubData.lifeInsurance,
-        retirement_401k: paystubData.retirement401k,
-        roth_ira: paystubData.rothIRA,
-        hsa: paystubData.hsa,
-        parking_fee: paystubData.parkingFee,
-        union_dues: paystubData.unionDues,
-        other_deductions: paystubData.otherDeductions,
-
-        // Year-to-Date totals
-        ytd_gross_pay: paystubData.ytdGrossPay,
-        ytd_federal_tax: paystubData.ytdFederalTax,
-        ytd_state_tax: paystubData.ytdStateTax,
-        ytd_social_security: paystubData.ytdSocialSecurity,
-        ytd_medicare: paystubData.ytdMedicare,
-        ytd_overtime_pay: paystubData.ytdOvertimePay,
-        ytd_total_deductions: paystubData.ytdTotalDeductions,
-        ytd_net_pay: paystubData.ytdNetPay,
-
-        // Calculated fields
-        gross_pay: paystubData.grossPay,
-        total_deductions: paystubData.totalDeductions,
-        net_pay: paystubData.netPay,
-      }
-
-      console.log('PDF data prepared, logo in PDF data:', pdfData.employer_logo ? 'Present' : 'Not present')
-      
       const pdfBlob = await generatePaystubPDF(pdfData)
-      const filename = `paystub-${paystubData.employeeName.replace(/\/+/g, "-")}-${paystubData.payDate || "draft"}.pdf`
+      const safeName = (paystubData.employeeName || 'employee').replace(/[^a-z0-9\-_.]+/gi, '-')
+      const filename = `paystub-${paystubData.templateId}-${safeName}.pdf`
       downloadPDF(pdfBlob, filename)
     } catch (error) {
       console.error("Download error:", error)
-      alert("Failed to generate PDF")
+      const message = (error instanceof Error) ? error.message : String(error)
+      alert("Failed to generate PDF: " + message)
     } finally {
       setIsDownloading(false)
     }
@@ -599,6 +597,7 @@ export function PaystubGenerator({ user, initialTemplateId }: PaystubGeneratorPr
           <Save className="w-4 h-4 mr-2" />
           {isSaving ? "Saving..." : "Save Paystub"}
         </Button>
+        <DownloadHtmlFileButton data={paystubData} label="Download HTML" />
         <Button 
           onClick={(e) => {
             e.preventDefault()

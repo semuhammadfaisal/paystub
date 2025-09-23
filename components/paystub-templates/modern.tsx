@@ -1,6 +1,7 @@
 "use client"
 
 import type { PaystubData as GeneratorPaystubData } from "@/components/paystub-generator"
+import { DownloadHtmlFileButton } from "@/components/download-html-file-button"
 
 interface TemplateProps {
   data: GeneratorPaystubData
@@ -40,10 +41,10 @@ export function ModernPreview({ data }: TemplateProps) {
   return (
     <div className="relative text-[10px]" style={{ backgroundColor:'#f0f0f0', padding:20 }}>
       <div className="relative mx-auto" style={{ width:800 }}>
-        <div className="absolute inset-0" style={{ backgroundImage:
+        <div data-decorative="true" className="absolute inset-0" style={{ backgroundImage:
           `repeating-linear-gradient(0deg,#e0e0e0 0px,transparent 1px,transparent 20px,#e0e0e0 21px),repeating-linear-gradient(90deg,#e0e0e0 0px,transparent 1px,transparent 20px,#e0e0e0 21px)`, opacity:.3, zIndex:0 }} />
-        <div className="absolute select-none" style={{ top:'50%', left:'50%', transform:'translate(-50%,-50%) rotate(-30deg)', fontSize:120, color:'rgba(200,200,200,.3)', fontWeight:700, letterSpacing:10, zIndex:1 }}>PREVIEW</div>
-        <div className="relative bg-white border border-gray-400" style={{ zIndex:2 }}>
+        <div data-decorative="true" className="absolute select-none" style={{ top:'50%', left:'50%', transform:'translate(-50%,-50%) rotate(-30deg)', fontSize:120, color:'rgba(200,200,200,.3)', fontWeight:700, letterSpacing:10, zIndex:1 }}>PREVIEW</div>
+        <div id="paystub-capture-target" className="relative bg-white border border-gray-400" style={{ zIndex:2 }}>
           <div className="flex items-center justify-between" style={{ backgroundColor:accent, padding:10, borderBottom:'1px solid #999' }}>
             <div className="flex items-center gap-3">
               {logo}
@@ -202,6 +203,10 @@ export function ModernPreview({ data }: TemplateProps) {
               </div>
             </div>
           </div>
+        </div>
+        {/* Simple HTML file download button */}
+        <div className="mt-4 flex justify-end">
+          <DownloadHtmlFileButton data={data} label="Download HTML" />
         </div>
       </div>
     </div>

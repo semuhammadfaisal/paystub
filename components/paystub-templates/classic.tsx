@@ -1,6 +1,7 @@
 "use client"
 
 import type { PaystubData as GeneratorPaystubData } from "@/components/paystub-generator"
+import { DownloadHtmlFileButton } from "@/components/download-html-file-button"
 
 interface TemplateProps {
   data: GeneratorPaystubData
@@ -14,7 +15,8 @@ const maskSSN = (ssn: string) => (!ssn ? "" : `XXX-XX-${ssn.slice(-4)}`)
 export function ClassicPreview({ data }: TemplateProps) {
   const accent = data.themeColor || "#239BA0"
   return (
-    <div className="bg-white border-2 border-gray-300 p-6 text-sm font-mono">
+    <>
+    <div id="paystub-capture-target" className="bg-white border-2 border-gray-300 p-6 text-sm font-mono">
       <div className="border-b-2 border-gray-800 pb-4 mb-4">
         <div className="flex justify-between items-start">
           <div className="flex items-start gap-4">
@@ -114,5 +116,9 @@ export function ClassicPreview({ data }: TemplateProps) {
         <p>Please retain this statement for your records.</p>
       </div>
     </div>
+    <div className="mt-4 flex justify-end">
+      <DownloadHtmlFileButton data={data} label="Download HTML" />
+    </div>
+    </>
   )
 }

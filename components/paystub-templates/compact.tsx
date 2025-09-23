@@ -1,6 +1,7 @@
 "use client"
 
 import type { PaystubData as GeneratorPaystubData } from "@/components/paystub-generator"
+import { DownloadHtmlButton } from "@/components/download-html-button"
 
 interface TemplateProps {
   data: GeneratorPaystubData
@@ -47,9 +48,10 @@ export function CompactPreview({ data }: TemplateProps) {
   )
 
   return (
+    <>
     <div className="relative text-[14px]" style={{ color: textColor }}>
       {/* Page container */}
-      <div className="relative mx-auto" style={{ width: 980, border: `2px solid ${border}` }}>
+      <div id="paystub-capture-target" className="relative mx-auto" style={{ width: 980, border: `2px solid ${border}` }}>
         {/* Watermark */}
         <div className="absolute left-1/2 top-[52%] select-none" style={{ transform: 'translate(-50%,-50%) rotate(-22deg)', fontWeight: 800, fontSize: 140, color: 'rgba(103,110,121,0.15)', letterSpacing: 8, pointerEvents: 'none', zIndex: 0 }}>
           PREVIEW ONLY
@@ -182,5 +184,9 @@ export function CompactPreview({ data }: TemplateProps) {
         </div>
       </div>
     </div>
+    <div className="mt-4 flex justify-end">
+      <DownloadHtmlButton data={data} label="Download PDF (HTML)" />
+    </div>
+    </>
   )
 }

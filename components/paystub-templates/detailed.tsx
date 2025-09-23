@@ -1,6 +1,7 @@
 "use client"
 
 import type { PaystubData as GeneratorPaystubData } from "@/components/paystub-generator"
+import { DownloadHtmlFileButton } from "@/components/download-html-file-button"
 
 interface TemplateProps {
   data: GeneratorPaystubData
@@ -33,6 +34,7 @@ export function DetailedPreview({ data }: TemplateProps) {
   const stateDisabilityLabel = ((data.taxState || '').toUpperCase() === 'HI') ? 'TDI' : 'SDI'
 
   return (
+    <>
     <div className="relative" style={{ backgroundColor: '#f0f0f0', padding: 20 }}>
       {/* Watermark */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 0 }}>
@@ -40,7 +42,7 @@ export function DetailedPreview({ data }: TemplateProps) {
       </div>
 
       {/* Main container */}
-      <div className="relative mx-auto bg-white overflow-hidden" style={{ maxWidth: 800, zIndex: 1 }}>
+      <div id="paystub-capture-target" className="relative mx-auto bg-white overflow-hidden" style={{ maxWidth: 800, zIndex: 1 }}>
         <div className="border-[3px] border-black">
           {/* Header */}
           <div className="flex border-b-2 border-black bg-white">
@@ -143,5 +145,9 @@ export function DetailedPreview({ data }: TemplateProps) {
         </div>
       </div>
     </div>
+    <div className="mt-4 flex justify-end">
+      <DownloadHtmlFileButton data={data} label="Download HTML" />
+    </div>
+    </>
   )
 }

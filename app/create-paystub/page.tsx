@@ -34,7 +34,7 @@ export default async function CreatePaystubPage({
 
         {/* Template selection now handled by dropdown inside PaystubGenerator */}
 
-        <PaystubGenerator user={user} initialTemplateId={typeof template === 'string' ? template : undefined} />
+        <PaystubGenerator user={user} initialTemplateId={typeof template === 'string' ? template : 'template2'} />
 
         {/* WhatsApp CTA section */}
         <section className="mt-12">
