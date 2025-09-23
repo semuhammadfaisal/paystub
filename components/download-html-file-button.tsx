@@ -34,6 +34,35 @@ export function DownloadHtmlFileButton({ data, label = "Download HTML" }: Props)
       const clone = containerForExport.cloneNode(true) as HTMLElement
       const nonExport = clone.querySelectorAll('[data-nonexport="true"]')
       nonExport.forEach(n => n.parentNode?.removeChild(n))
+
+      // Inline computed styles from the live DOM to the clone to preserve exact appearance
+      try {
+        const applyComputed = (src: Element, dst: HTMLElement) => {
+          const cs = window.getComputedStyle(src as HTMLElement)
+          const styleText: string[] = []
+          // Copy all computed properties
+          for (let i = 0; i < cs.length; i++) {
+            const prop = cs.item(i)
+            const val = cs.getPropertyValue(prop)
+            // Skip extremely large or dynamic properties if desired
+            styleText.push(`${prop}:${val}`)
+          }
+          dst.setAttribute('style', `${dst.getAttribute('style') || ''};${styleText.join(';')}`)
+        }
+        const walk = (srcNode: Element, dstNode: Element) => {
+          if (dstNode instanceof HTMLElement) {
+            applyComputed(srcNode, dstNode)
+          }
+          const srcChildren = Array.from(srcNode.children)
+          const dstChildren = Array.from(dstNode.children)
+          for (let i = 0; i < Math.min(srcChildren.length, dstChildren.length); i++) {
+            walk(srcChildren[i], dstChildren[i])
+          }
+        }
+        walk(containerForExport, clone)
+      } catch (e) {
+        console.warn('Failed to inline computed styles (continuing):', e)
+      }
       const htmlFragment = clone.outerHTML
 
       // Minimal standalone HTML document using Tailwind CDN to honor utility classes and arbitrary values

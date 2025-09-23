@@ -1,7 +1,6 @@
 "use client"
 
 import type { PaystubData as GeneratorPaystubData } from "@/components/paystub-generator"
-import { DownloadHtmlFileButton } from "@/components/download-html-file-button"
 
 interface TemplateProps {
   data: GeneratorPaystubData
@@ -115,9 +114,6 @@ export function ClassicPreview({ data }: TemplateProps) {
         <p>This is a computer-generated payroll statement and does not require a signature.</p>
         <p>Please retain this statement for your records.</p>
       </div>
-    </div>
-    <div className="mt-4 flex justify-end">
-      <DownloadHtmlFileButton data={data} label="Download HTML" />
     </div>
     </>
   )

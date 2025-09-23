@@ -1,7 +1,6 @@
 "use client"
 
 import type { PaystubData as GeneratorPaystubData } from "@/components/paystub-generator"
-import { DownloadHtmlFileButton } from "@/components/download-html-file-button"
 
 interface TemplateProps {
   data: GeneratorPaystubData
@@ -203,10 +202,6 @@ export function ModernPreview({ data }: TemplateProps) {
               </div>
             </div>
           </div>
-        </div>
-        {/* Simple HTML file download button */}
-        <div className="mt-4 flex justify-end">
-          <DownloadHtmlFileButton data={data} label="Download HTML" />
         </div>
       </div>
     </div>
