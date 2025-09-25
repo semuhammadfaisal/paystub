@@ -1,7 +1,6 @@
 "use client"
 
 import type { PaystubData as GeneratorPaystubData } from "@/components/paystub-generator"
-import { DownloadHtmlButton } from "@/components/download-html-button"
 
 interface TemplateProps {
   data: GeneratorPaystubData
@@ -53,7 +52,7 @@ export function CompactPreview({ data }: TemplateProps) {
       {/* Page container */}
       <div id="paystub-capture-target" className="relative mx-auto" style={{ width: 980, border: `2px solid ${border}` }}>
         {/* Watermark */}
-        <div className="absolute left-1/2 top-[52%] select-none" style={{ transform: 'translate(-50%,-50%) rotate(-22deg)', fontWeight: 800, fontSize: 140, color: 'rgba(103,110,121,0.15)', letterSpacing: 8, pointerEvents: 'none', zIndex: 0 }}>
+        <div className="absolute left-1/2 top-[52%] select-none" data-nonexport="true" style={{ transform: 'translate(-50%,-50%) rotate(-22deg)', fontWeight: 800, fontSize: 140, color: 'rgba(103,110,121,0.15)', letterSpacing: 8, pointerEvents: 'none', zIndex: 0 }}>
           PREVIEW ONLY
         </div>
 
@@ -124,9 +123,9 @@ export function CompactPreview({ data }: TemplateProps) {
             <div className="income-body" style={{ padding: '12px 8px' }}>
               <div className="income-row" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', padding: '8px 6px', alignItems: 'center' }}>
                 <div className="col-name">{data.payType === 'hourly' ? 'Hourly' : 'Salary'}</div>
-                <div className="col-rate">{formatCurrency(data.payType === 'hourly' ? (data.hourlyRate || 0) : (data.salary || 0))}</div>
-                <div className="col-hours">{data.payType === 'hourly' ? (data.hoursWorked || 0) : '-'}</div>
-                <div className="col-amt" style={{ textAlign: 'right' }}>{formatCurrency(data.grossPay || 0)}</div>
+                <div className="col-rate"><span className="calc-val">{formatCurrency(data.payType === 'hourly' ? (data.hourlyRate || 0) : (data.salary || 0))}</span></div>
+                <div className="col-hours"><span className="calc-val">{data.payType === 'hourly' ? (data.hoursWorked || 0) : '-'}</span></div>
+                <div className="col-amt" style={{ textAlign: 'right' }}><span className="calc-val">{formatCurrency(data.grossPay || 0)}</span></div>
               </div>
               <div className="income-space" style={{ height: 220, background: 'white' }} />
             </div>
@@ -138,28 +137,28 @@ export function CompactPreview({ data }: TemplateProps) {
             <div className="ded-list" style={{ padding: 6 }}>
               <div className="ded-item" style={{ display: 'grid', gridTemplateColumns: '1fr 80px 90px', gap: 8, padding: '8px 6px', alignItems: 'center', borderTop: '0' }}>
                 <div>FICA - Medicare</div>
-                <div className="amt" style={{ textAlign: 'right' }}>{formatCurrency(data.medicare || 0)}</div>
-                <div className="ytd" style={{ textAlign: 'right', color: muted, fontSize: 13 }}>{formatCurrency(ytdMedicare || 0)}</div>
+                <div className="amt" style={{ textAlign: 'right' }}><span className="calc-val">{formatCurrency(data.medicare || 0)}</span></div>
+                <div className="ytd" style={{ textAlign: 'right', color: muted, fontSize: 13 }}><span className="calc-val">{formatCurrency(ytdMedicare || 0)}</span></div>
               </div>
               <div className="ded-item" style={{ display: 'grid', gridTemplateColumns: '1fr 80px 90px', gap: 8, padding: '8px 6px', alignItems: 'center', borderTop: '1px solid #e6ecff' }}>
                 <div>FICA - Social Security</div>
-                <div className="amt" style={{ textAlign: 'right' }}>{formatCurrency(data.socialSecurity || 0)}</div>
-                <div className="ytd" style={{ textAlign: 'right', color: muted, fontSize: 13 }}>{formatCurrency(ytdSS || 0)}</div>
+                <div className="amt" style={{ textAlign: 'right' }}><span className="calc-val">{formatCurrency(data.socialSecurity || 0)}</span></div>
+                <div className="ytd" style={{ textAlign: 'right', color: muted, fontSize: 13 }}><span className="calc-val">{formatCurrency(ytdSS || 0)}</span></div>
               </div>
               <div className="ded-item" style={{ display: 'grid', gridTemplateColumns: '1fr 80px 90px', gap: 8, padding: '8px 6px', alignItems: 'center', borderTop: '1px solid #e6ecff' }}>
                 <div>Federal Tax</div>
-                <div className="amt" style={{ textAlign: 'right' }}>{formatCurrency(data.federalTax || 0)}</div>
-                <div className="ytd" style={{ textAlign: 'right', color: muted, fontSize: 13 }}>{formatCurrency(ytdFederal || 0)}</div>
+                <div className="amt" style={{ textAlign: 'right' }}><span className="calc-val">{formatCurrency(data.federalTax || 0)}</span></div>
+                <div className="ytd" style={{ textAlign: 'right', color: muted, fontSize: 13 }}><span className="calc-val">{formatCurrency(ytdFederal || 0)}</span></div>
               </div>
               <div className="ded-item" style={{ display: 'grid', gridTemplateColumns: '1fr 80px 90px', gap: 8, padding: '8px 6px', alignItems: 'center', borderTop: '1px solid #e6ecff' }}>
                 <div>State Tax</div>
-                <div className="amt" style={{ textAlign: 'right' }}>{formatCurrency(data.stateTax || 0)}</div>
-                <div className="ytd" style={{ textAlign: 'right', color: muted, fontSize: 13 }}>{formatCurrency(ytdState || 0)}</div>
+                <div className="amt" style={{ textAlign: 'right' }}><span className="calc-val">{formatCurrency(data.stateTax || 0)}</span></div>
+                <div className="ytd" style={{ textAlign: 'right', color: muted, fontSize: 13 }}><span className="calc-val">{formatCurrency(ytdState || 0)}</span></div>
               </div>
               <div className="ded-item" style={{ display: 'grid', gridTemplateColumns: '1fr 80px 90px', gap: 8, padding: '8px 6px', alignItems: 'center', borderTop: '1px solid #e6ecff' }}>
                 <div>{stateDisabilityLabel}</div>
-                <div className="amt" style={{ textAlign: 'right' }}>{formatCurrency(data.stateDisability || 0)}</div>
-                <div className="ytd" style={{ textAlign: 'right', color: muted, fontSize: 13 }}>{formatCurrency(ytdSDI || 0)}</div>
+                <div className="amt" style={{ textAlign: 'right' }}><span className="calc-val">{formatCurrency(data.stateDisability || 0)}</span></div>
+                <div className="ytd" style={{ textAlign: 'right', color: muted, fontSize: 13 }}><span className="calc-val">{formatCurrency(ytdSDI || 0)}</span></div>
               </div>
             </div>
           </div>
@@ -184,9 +183,7 @@ export function CompactPreview({ data }: TemplateProps) {
         </div>
       </div>
     </div>
-    <div className="mt-4 flex justify-end">
-      <DownloadHtmlButton data={data} label="Download PDF (HTML)" />
-    </div>
+    {/* Download button removed to keep single unified download flow */}
     </>
   )
 }

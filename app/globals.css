@@ -6,8 +6,9 @@
 :root {
   --background: #ffffff;
   --foreground: #333333;
-  --card: #f0f4ff;
-  --card-foreground: #0033cc;
+  /* Neutral card palette for professional, minimal look */
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
   --popover: #ffffff;
   --popover-foreground: #333333;
   --primary: #239BA0;
@@ -120,4 +121,11 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Preview-only blur for calculated values. The visible preview wrapper gets the
+   'preview-blur' class, while the hidden capture snapshot does not, so the
+   exported/downloaded HTML remains crisp and unblurred. */
+.preview-blur .calc-val {
+  filter: blur(6px);
 }

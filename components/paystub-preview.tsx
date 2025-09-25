@@ -36,13 +36,12 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
   let content: React.ReactNode
   if (selected === 'template2') content = <ModernPreview data={data} />
   else if (selected === 'template3') content = <DetailedPreview data={data} />
-  else if (selected === 'template4') content = <CompactPreview data={data} />
   else content = (
     <div className="bg-white border-2 border-gray-300 p-6 text-sm font-mono">
       {/* Header */}
       <div className="border-b-2 border-gray-800 pb-4 mb-4">
         <div className="flex justify-between items-start">
-          <div className="flex items-start gap-4">
+          <div className="flex items-center gap-4">
             {data.companyLogo && (
               <img 
                 src={data.companyLogo} 
@@ -52,24 +51,19 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
             )}
             <div>
               <h1 className="text-lg font-bold" style={{ color: accent }}>PAYROLL STATEMENT</h1>
-              <div className="mt-2">
-                <div className="font-bold">{data.companyName || "Company Name"}</div>
-                <div>{data.companyAddress || "Company Address"}</div>
-                <div>
-                  {data.companyCity || "City"}, {data.companyState || "ST"} {data.companyZip || "ZIP"}
-                </div>
-                {data.companyPhone && <div>Phone: {data.companyPhone}</div>}
-                <div>EIN: {data.companyEIN || "XX-XXXXXXX"}</div>
+              <div className="font-bold">{data.companyName || "Company Name"}</div>
+              <div>{data.companyAddress || "Company Address"}</div>
+              <div>
+                {data.companyCity || "City"}, {data.companyState || "ST"} {data.companyZip || "ZIP"}
               </div>
-            </div>
+              {data.companyPhone && <div>Phone: {data.companyPhone}</div>}
           </div>
+        </div>
           <div className="text-right">
             <div className="px-3 py-1 rounded font-bold" style={{ backgroundColor: accent, color: '#ffffff' }}>Paystub</div>
             <div className="mt-2 text-xs">
               <div>Pay Date: {formatDate(data.payDate)}</div>
-              <div>
-                Pay Period: {formatDate(data.payPeriodStart)} - {formatDate(data.payPeriodEnd)}
-              </div>
+              <div>Pay Period: {formatDate(data.payPeriodStart)} - {formatDate(data.payPeriodEnd)}</div>
             </div>
           </div>
         </div>
@@ -94,11 +88,11 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
           <div>Pay Type: {data.payType === "hourly" ? "Hourly" : "Salary"}</div>
                       {data.payType === "hourly" && (
               <>
-                <div>Hourly Rate: {formatCurrency(data.hourlyRate)}</div>
-                <div>Hours Worked: {data.hoursWorked}</div>
+                <div>Hourly Rate: <span className="calc-val">{formatCurrency(data.hourlyRate)}</span></div>
+                <div>Hours Worked: <span className="calc-val">{data.hoursWorked}</span></div>
                 {data.overtimeHours > 0 && (
                   <div>
-                    Overtime Hours: {data.overtimeHours} @ {formatCurrency(data.overtimeRate)}
+                    Overtime Hours: <span className="calc-val">{data.overtimeHours}</span> @ <span className="calc-val">{formatCurrency(data.overtimeRate)}</span>
                   </div>
                 )}
                 {data.holidayHours > 0 && (
@@ -123,55 +117,55 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
             {data.payType === "hourly" ? (
               <>
                 <div className="flex justify-between">
-                  <span>Regular Pay ({data.hoursWorked} hrs)</span>
-                  <span>{formatCurrency(data.hourlyRate * data.hoursWorked)}</span>
+                  <span>Regular Pay (<span className="calc-val">{data.hoursWorked}</span> hrs)</span>
+                  <span className="calc-val">{formatCurrency(data.hourlyRate * data.hoursWorked)}</span>
                 </div>
                 {data.overtimeHours > 0 && (
                   <div className="flex justify-between">
-                    <span>Overtime Pay ({data.overtimeHours} hrs)</span>
-                    <span>{formatCurrency(data.overtimeHours * (data.overtimeRate || data.hourlyRate * 1.5))}</span>
+                    <span>Overtime Pay (<span className="calc-val">{data.overtimeHours}</span> hrs)</span>
+                    <span className="calc-val">{formatCurrency(data.overtimeHours * (data.overtimeRate || data.hourlyRate * 1.5))}</span>
                   </div>
                 )}
                 {data.holidayHours > 0 && (
                   <div className="flex justify-between">
-                    <span>Holiday Pay ({data.holidayHours} hrs)</span>
-                    <span>{formatCurrency(data.holidayHours * data.hourlyRate)}</span>
+                    <span>Holiday Pay (<span className="calc-val">{data.holidayHours}</span> hrs)</span>
+                    <span className="calc-val">{formatCurrency(data.holidayHours * data.hourlyRate)}</span>
                   </div>
                 )}
                 {data.sickHours > 0 && (
                   <div className="flex justify-between">
-                    <span>Sick Pay ({data.sickHours} hrs)</span>
-                    <span>{formatCurrency(data.sickHours * data.hourlyRate)}</span>
+                    <span>Sick Pay (<span className="calc-val">{data.sickHours}</span> hrs)</span>
+                    <span className="calc-val">{formatCurrency(data.sickHours * data.hourlyRate)}</span>
                   </div>
                 )}
                 {data.vacationHours > 0 && (
                   <div className="flex justify-between">
-                    <span>Vacation Pay ({data.vacationHours} hrs)</span>
-                    <span>{formatCurrency(data.vacationHours * data.hourlyRate)}</span>
+                    <span>Vacation Pay (<span className="calc-val">{data.vacationHours}</span> hrs)</span>
+                    <span className="calc-val">{formatCurrency(data.vacationHours * data.hourlyRate)}</span>
                   </div>
                 )}
               </>
             ) : (
               <div className="flex justify-between">
                 <span>Salary</span>
-                <span>{formatCurrency(data.salary)}</span>
+                <span className="calc-val">{formatCurrency(data.salary)}</span>
               </div>
             )}
             {data.bonusAmount > 0 && (
               <div className="flex justify-between">
                 <span>Bonus</span>
-                <span>{formatCurrency(data.bonusAmount)}</span>
+                <span className="calc-val">{formatCurrency(data.bonusAmount)}</span>
               </div>
             )}
             {data.commissionAmount > 0 && (
               <div className="flex justify-between">
                 <span>Commission</span>
-                <span>{formatCurrency(data.commissionAmount)}</span>
+                <span className="calc-val">{formatCurrency(data.commissionAmount)}</span>
               </div>
             )}
             <div className="flex justify-between font-bold border-t border-gray-400 pt-1">
               <span>GROSS PAY</span>
-              <span>{formatCurrency(data.grossPay)}</span>
+              <span className="calc-val">{formatCurrency(data.grossPay)}</span>
             </div>
           </div>
         </div>
@@ -182,88 +176,88 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
             {data.federalTax > 0 && (
               <div className="flex justify-between">
                 <span>Federal Tax</span>
-                <span>{formatCurrency(data.federalTax)}</span>
+                <span className="calc-val">{formatCurrency(data.federalTax)}</span>
               </div>
             )}
             {data.stateTax > 0 && (
               <div className="flex justify-between">
                 <span>State Tax</span>
-                <span>{formatCurrency(data.stateTax)}</span>
+                <span className="calc-val">{formatCurrency(data.stateTax)}</span>
               </div>
             )}
             {data.socialSecurity > 0 && (
               <div className="flex justify-between">
                 <span>Social Security</span>
-                <span>{formatCurrency(data.socialSecurity)}</span>
+                <span className="calc-val">{formatCurrency(data.socialSecurity)}</span>
               </div>
             )}
             {data.medicare > 0 && (
               <div className="flex justify-between">
                 <span>Medicare</span>
-                <span>{formatCurrency(data.medicare)}</span>
+                <span className="calc-val">{formatCurrency(data.medicare)}</span>
               </div>
             )}
             {data.healthInsurance > 0 && (
               <div className="flex justify-between">
                 <span>Health Insurance</span>
-                <span>{formatCurrency(data.healthInsurance)}</span>
+                <span className="calc-val">{formatCurrency(data.healthInsurance)}</span>
               </div>
             )}
             {data.retirement401k > 0 && (
               <div className="flex justify-between">
                 <span>401(k)</span>
-                <span>{formatCurrency(data.retirement401k)}</span>
+                <span className="calc-val">{formatCurrency(data.retirement401k)}</span>
               </div>
             )}
             {data.rothIRA > 0 && (
               <div className="flex justify-between">
                 <span>Roth IRA</span>
-                <span>{formatCurrency(data.rothIRA)}</span>
+                <span className="calc-val">{formatCurrency(data.rothIRA)}</span>
               </div>
             )}
             {data.hsa > 0 && (
               <div className="flex justify-between">
                 <span>HSA</span>
-                <span>{formatCurrency(data.hsa)}</span>
+                <span className="calc-val">{formatCurrency(data.hsa)}</span>
               </div>
             )}
             <div className="flex justify-between">
               <span>{((data.taxState || '').toUpperCase() === 'HI') ? 'TDI' : 'State Disability'}</span>
-              <span>{formatCurrency(data.stateDisability || 0)}</span>
+              <span className="calc-val">{formatCurrency(data.stateDisability || 0)}</span>
             </div>
             {data.visionInsurance > 0 && (
               <div className="flex justify-between">
                 <span>Vision Insurance</span>
-                <span>{formatCurrency(data.visionInsurance)}</span>
+                <span className="calc-val">{formatCurrency(data.visionInsurance)}</span>
               </div>
             )}
             {data.lifeInsurance > 0 && (
               <div className="flex justify-between">
                 <span>Life Insurance</span>
-                <span>{formatCurrency(data.lifeInsurance)}</span>
+                <span className="calc-val">{formatCurrency(data.lifeInsurance)}</span>
               </div>
             )}
             {data.parkingFee > 0 && (
               <div className="flex justify-between">
                 <span>Parking Fee</span>
-                <span>{formatCurrency(data.parkingFee)}</span>
+                <span className="calc-val">{formatCurrency(data.parkingFee)}</span>
               </div>
             )}
             {data.unionDues > 0 && (
               <div className="flex justify-between">
                 <span>Union Dues</span>
-                <span>{formatCurrency(data.unionDues)}</span>
+                <span className="calc-val">{formatCurrency(data.unionDues)}</span>
               </div>
             )}
             {data.otherDeductions > 0 && (
               <div className="flex justify-between">
                 <span>Other</span>
-                <span>{formatCurrency(data.otherDeductions)}</span>
+                <span className="calc-val">{formatCurrency(data.otherDeductions)}</span>
               </div>
             )}
             <div className="flex justify-between font-bold border-t border-gray-400 pt-1">
               <span>TOTAL DEDUCTIONS</span>
-              <span>{formatCurrency(data.totalDeductions)}</span>
+              <span className="calc-val">{formatCurrency(data.totalDeductions)}</span>
             </div>
           </div>
         </div>
@@ -273,7 +267,7 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
       <div className="border-t-2 border-gray-800 pt-4">
         <div className="flex justify-between items-center p-3 rounded" style={{ backgroundColor: accent, color: '#ffffff' }}>
           <span className="text-lg font-bold">NET PAY</span>
-          <span className="text-xl font-bold">{formatCurrency(data.netPay)}</span>
+          <span className="text-xl font-bold calc-val">{formatCurrency(data.netPay)}</span>
         </div>
       </div>
 
@@ -288,7 +282,7 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
   return (
     <>
       {/* Visible on-screen preview */}
-      <div id="paystub-preview-capture">
+      <div id="paystub-preview-capture" className="preview-blur">
         {content}
       </div>
       {/* Off-screen duplicate strictly for capture to improve reliability */}
