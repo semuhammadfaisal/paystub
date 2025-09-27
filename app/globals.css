@@ -133,3 +133,57 @@
 .preview-blur .blur-taxes .calc-val {
   filter: blur(6px) !important;
 }
+
+/* Global preview-only watermark overlay: center within each template container
+   (bounded by #paystub-capture-target). Skip compact (template 4) which has
+   its own built-in watermark. */
+#paystub-preview-capture.preview-blur #paystub-capture-target {
+  position: relative;
+  overflow: hidden; /* ensure rotated watermark never bleeds outside template */
+}
+#paystub-preview-capture.preview-blur #paystub-capture-target::after {
+  content: "PREVIEW ONLY";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-22deg);
+  transform-origin: center center;
+  /* Force a consistent sans-serif font so it doesn't inherit monospace from templates */
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Noto Sans", "Liberation Sans", sans-serif !important;
+  white-space: nowrap;
+  line-height: 1;
+  pointer-events: none;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(0, 0, 0, 0.14);
+  font-size: clamp(24px, 5vw, 80px);
+  z-index: 9999;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Per-template sizing tweaks to keep watermark centered without crowding */
+#paystub-preview-capture.preview-blur #paystub-capture-target[data-template="classic"]::after {
+  font-size: clamp(22px, 5vw, 72px);
+  top: 52%;
+}
+#paystub-preview-capture.preview-blur #paystub-capture-target[data-template="modern"]::after {
+  font-size: clamp(22px, 5vw, 72px);
+  top: 52%;
+}
+#paystub-preview-capture.preview-blur #paystub-capture-target[data-template="detailed"]::after {
+  font-size: clamp(22px, 5vw, 72px);
+  top: 52%;
+}
+/* Compact (Template 4) now also uses global overlay */
+#paystub-preview-capture.preview-blur #paystub-capture-target[data-template="compact"]::after {
+  font-size: clamp(22px, 5vw, 72px);
+  top: 52%;
+}
+ 
+
+/* Hide template-level watermarks only for templates where the global one is active */
+#paystub-preview-capture.preview-blur #paystub-capture-target [data-template-watermark] {
+  display: none !important;
+}

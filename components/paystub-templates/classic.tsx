@@ -15,7 +15,7 @@ export function ClassicPreview({ data }: TemplateProps) {
   const accent = data.themeColor || "#239BA0"
   return (
     <>
-    <div id="paystub-capture-target" className="bg-white border-2 border-gray-300 p-6 text-sm font-mono">
+    <div id="paystub-capture-target" data-template="classic" className="bg-white border-2 border-gray-300 p-6 text-sm font-mono">
       <div className="border-b-2 border-gray-800 pb-4 mb-4">
         <div className="flex justify-between items-start">
           <div className="flex items-start gap-4">

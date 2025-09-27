@@ -37,12 +37,12 @@ export function DetailedPreview({ data }: TemplateProps) {
     <>
     <div className="relative" style={{ backgroundColor: '#f0f0f0', padding: 20 }}>
       {/* Watermark */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 0 }} data-nonexport="true">
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 0 }} data-nonexport="true" data-template-watermark>
         <div style={{ transform: 'rotate(-45deg)', fontSize: 100, color: 'rgba(200,200,200,0.3)', fontWeight: 700, letterSpacing: 10 }}>PREVIEW</div>
       </div>
 
       {/* Main container */}
-      <div id="paystub-capture-target" className="relative mx-auto bg-white overflow-hidden" style={{ maxWidth: 800, zIndex: 1 }}>
+      <div id="paystub-capture-target" data-template="detailed" className="relative mx-auto bg-white overflow-hidden" style={{ maxWidth: 800, zIndex: 1 }}>
         <div className="border-[3px] border-black">
           {/* Header */}
           <div className="flex border-b-2 border-black bg-white">

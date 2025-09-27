@@ -50,9 +50,9 @@ export function CompactPreview({ data }: TemplateProps) {
     <>
     <div className="relative text-[14px]" style={{ color: textColor }}>
       {/* Page container */}
-      <div id="paystub-capture-target" className="relative mx-auto" style={{ width: 980, border: `2px solid ${border}` }}>
+      <div id="paystub-capture-target" data-template="compact" className="relative mx-auto" style={{ width: 980, border: `2px solid ${border}` }}>
         {/* Watermark */}
-        <div className="absolute left-1/2 top-[52%] select-none" data-nonexport="true" style={{ transform: 'translate(-50%,-50%) rotate(-22deg)', fontWeight: 800, fontSize: 140, color: 'rgba(103,110,121,0.15)', letterSpacing: 8, pointerEvents: 'none', zIndex: 0 }}>
+        <div className="absolute left-1/2 top-[52%] select-none" data-nonexport="true" data-template-watermark style={{ transform: 'translate(-50%,-50%) rotate(-22deg)', fontWeight: 800, fontSize: 140, color: 'rgba(103,110,121,0.15)', letterSpacing: 8, pointerEvents: 'none', zIndex: 0 }}>
           PREVIEW ONLY
         </div>
 

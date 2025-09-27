@@ -394,7 +394,7 @@ export function PaystubGenerator({ user: _user, initialTemplateId }: PaystubGene
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Button variant="outline" className="bg-white hover:bg-gray-50 text-black">
+            <Button variant="outline" className="bg-white text-black">
               <MessageCircle className="h-4 w-4 mr-2" />
               Customized templates
             </Button>

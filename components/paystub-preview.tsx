@@ -34,11 +34,12 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
   // Modular template routing but always wrap in a capture container
   const selected = (data.templateId || 'template1').toLowerCase()
   let content: React.ReactNode
-  if (selected === 'template2') content = <ModernPreview data={data} />
+  if (selected === 'template1') content = <ClassicPreview data={data} />
+  else if (selected === 'template2') content = <ModernPreview data={data} />
   else if (selected === 'template3') content = <DetailedPreview data={data} />
   else if (selected === 'template4') content = <CompactPreview data={data} />
   else content = (
-    <div className="bg-white border-2 border-gray-300 p-6 text-sm font-mono">
+    <div id="paystub-capture-target" className="bg-white border-2 border-gray-300 p-6 text-sm font-mono">
       {/* Header */}
       <div className="border-b-2 border-gray-800 pb-4 mb-4">
         <div className="flex justify-between items-start">
