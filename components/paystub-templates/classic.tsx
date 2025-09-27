@@ -90,7 +90,7 @@ export function ClassicPreview({ data }: TemplateProps) {
             <div className="flex justify-between font-bold border-t border-gray-400 pt-1"><span>GROSS PAY</span><span className="calc-val">{formatCurrency(data.grossPay)}</span></div>
           </div>
         </div>
-        <div>
+        <div className="blur-taxes">
           <h3 className="font-bold mb-2 border-b border-gray-400" style={{ color: accent }}>DEDUCTIONS</h3>
           <div className="space-y-1">
             <div className="flex justify-between"><span>Federal Tax</span><span className="calc-val">{formatCurrency(data.federalTax || 0)}</span></div>

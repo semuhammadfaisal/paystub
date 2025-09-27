@@ -179,7 +179,7 @@ export function ModernPreview({ data }: TemplateProps) {
                     </tbody>
                   </table>
                 </div>
-                <div>
+                <div className="blur-taxes">
                   <div className="text-center bg-gray-200 border border-gray-400 py-1 text-[10px]">Associated Taxes</div>
                   <table className="w-full border-collapse text-[10px] mb-4">
                     <thead>

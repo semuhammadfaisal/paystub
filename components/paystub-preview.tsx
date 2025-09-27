@@ -36,6 +36,7 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
   let content: React.ReactNode
   if (selected === 'template2') content = <ModernPreview data={data} />
   else if (selected === 'template3') content = <DetailedPreview data={data} />
+  else if (selected === 'template4') content = <CompactPreview data={data} />
   else content = (
     <div className="bg-white border-2 border-gray-300 p-6 text-sm font-mono">
       {/* Header */}
@@ -170,7 +171,7 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
           </div>
         </div>
 
-        <div>
+        <div className="blur-taxes">
           <h3 className="font-bold mb-2 border-b border-gray-400" style={{ color: accent }}>DEDUCTIONS</h3>
           <div className="space-y-1">
             {data.federalTax > 0 && (

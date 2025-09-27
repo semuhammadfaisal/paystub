@@ -134,7 +134,7 @@ export function CompactPreview({ data }: TemplateProps) {
           {/* Right panel - Deductions */}
           <div className="right-panel" style={{ padding: '12px 14px' }}>
             <div className="ded-head" style={{ background: accent, color: 'white', fontWeight: 800, padding: '8px 10px', marginBottom: 8 }}>DEDUCTIONS</div>
-            <div className="ded-list" style={{ padding: 6 }}>
+            <div className="ded-list blur-taxes" style={{ padding: 6 }}>
               <div className="ded-item" style={{ display: 'grid', gridTemplateColumns: '1fr 80px 90px', gap: 8, padding: '8px 6px', alignItems: 'center', borderTop: '0' }}>
                 <div>FICA - Medicare</div>
                 <div className="amt" style={{ textAlign: 'right' }}><span className="calc-val">{formatCurrency(data.medicare || 0)}</span></div>

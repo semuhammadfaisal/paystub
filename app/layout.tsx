@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   title: "SRS Financials - Professional Paystub Maker",
   description: "Create professional paystubs, W2 forms, and tax documents with SRS Financials",
   generator: "v0.app",
+  icons: {
+    icon: "/faviconsrs.ico",
+  },
 }
 
 export default function RootLayout({

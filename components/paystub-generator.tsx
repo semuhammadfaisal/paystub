@@ -7,6 +7,8 @@ import { LogoUpload } from "@/components/logo-upload"
 import { StepHeader } from "@/components/step-header"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DownloadHtmlFileButton } from "@/components/download-html-file-button"
+import { Button } from "@/components/ui/button"
+import { MessageCircle } from "lucide-react"
 
 export interface PaystubData {
   // Template Selection
@@ -385,6 +387,19 @@ export function PaystubGenerator({ user: _user, initialTemplateId }: PaystubGene
         <div className="bg-white">
           <PaystubPreview data={paystubData} />
         </div>
+        {/* Simple, centered CTA below preview (moved from header) */}
+        <div className="flex justify-center mt-4">
+          <a
+            href={`https://wa.me/12067045757?text=${encodeURIComponent("Hi! I'm interested in personalized and customized paystub templates. Can you help me?")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button variant="outline" className="bg-white hover:bg-gray-50 text-black">
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Customized templates
+            </Button>
+          </a>
+        </div>
 
         <StepHeader step={1} title="Company Logo" />
         
@@ -407,7 +422,7 @@ export function PaystubGenerator({ user: _user, initialTemplateId }: PaystubGene
       </div>
 
       <div className="flex justify-center">
-        <DownloadHtmlFileButton data={paystubData} label="Download Paystub" />
+        <DownloadHtmlFileButton data={paystubData} label="Checkout" />
       </div>
     </div>
   )

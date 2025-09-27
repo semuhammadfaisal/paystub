@@ -93,7 +93,6 @@ export function DetailedPreview({ data }: TemplateProps) {
             <div className="w-[80px] px-3 py-1 text-right">YTD TOTAL</div>
           </div>
 
-          {/* Income row */}
           <div className="flex border-b border-gray-300 text-[11px]">
             <div className="w-[80px] px-3 py-1 border-r border-gray-200">{data.payType === 'hourly' ? 'Hourly' : 'Salary'}</div>
             <div className="w-[100px] px-3 py-1 border-r border-gray-200 text-right"><span className="calc-val">{formatCurrency(data.payType === 'hourly' ? (data.hourlyRate||0) : (data.salary||0))}</span></div>
@@ -101,31 +100,31 @@ export function DetailedPreview({ data }: TemplateProps) {
             <div className="w-[120px] px-3 py-1 border-r border-gray-200 text-right"><span className="calc-val">{formatCurrency(data.grossPay||0)}</span></div>
             <div className="flex-1 px-0 py-0 border-r border-gray-200">
               <div className="font-bold text-[11px] px-3 py-2 bg-gray-100 border-b border-gray-200">STATUTORY DEDUCTIONS</div>
-              <div className="px-3">
+              <div className="px-3 blur-taxes">
                 <div className="flex border-b border-gray-100 py-1">
                   <div className="flex-1">FICA - Medicare</div>
                   <div className="w-[80px] text-right pr-5"><span className="calc-val">{formatCurrency(data.medicare || 0)}</span></div>
-                  <div className="w-[80px] text-right"><span className="calc-val">{formatCurrency(ytdMedicare || 0)}</span></div>
+                  <div className="w-[80px] text-right" style={{ color: '#666', fontSize: 13 }}><span className="calc-val">{formatCurrency(ytdMedicare || 0)}</span></div>
                 </div>
                 <div className="flex border-b border-gray-100 py-1">
                   <div className="flex-1">FICA - Social Security</div>
                   <div className="w-[80px] text-right pr-5"><span className="calc-val">{formatCurrency(data.socialSecurity || 0)}</span></div>
-                  <div className="w-[80px] text-right"><span className="calc-val">{formatCurrency(ytdSS || 0)}</span></div>
+                  <div className="w-[80px] text-right" style={{ color: '#666', fontSize: 13 }}><span className="calc-val">{formatCurrency(ytdSS || 0)}</span></div>
                 </div>
                 <div className="flex border-b border-gray-100 py-1">
                   <div className="flex-1">Federal Tax</div>
                   <div className="w-[80px] text-right pr-5"><span className="calc-val">{formatCurrency(data.federalTax || 0)}</span></div>
-                  <div className="w-[80px] text-right"><span className="calc-val">{formatCurrency(ytdFederal || 0)}</span></div>
+                  <div className="w-[80px] text-right" style={{ color: '#666', fontSize: 13 }}><span className="calc-val">{formatCurrency(ytdFederal || 0)}</span></div>
                 </div>
                 <div className="flex border-b border-gray-100 py-1">
                   <div className="flex-1">State Tax</div>
                   <div className="w-[80px] text-right pr-5"><span className="calc-val">{formatCurrency(data.stateTax || 0)}</span></div>
-                  <div className="w-[80px] text-right"><span className="calc-val">{formatCurrency(ytdState || 0)}</span></div>
+                  <div className="w-[80px] text-right" style={{ color: '#666', fontSize: 13 }}><span className="calc-val">{formatCurrency(ytdState || 0)}</span></div>
                 </div>
                 <div className="flex border-b border-gray-100 py-1">
                   <div className="flex-1">{stateDisabilityLabel}</div>
                   <div className="w-[80px] text-right pr-5"><span className="calc-val">{formatCurrency(data.stateDisability || 0)}</span></div>
-                  <div className="w-[80px] text-right"><span className="calc-val">{formatCurrency(ytdSDI || 0)}</span></div>
+                  <div className="w-[80px] text-right" style={{ color: '#666', fontSize: 13 }}><span className="calc-val">{formatCurrency(ytdSDI || 0)}</span></div>
                 </div>
               </div>
             </div>
