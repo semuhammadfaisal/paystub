@@ -87,24 +87,28 @@ export function ClassicPreview({ data }: TemplateProps) {
             )}
             {data.bonusAmount > 0 && (<div className="flex justify-between"><span>Bonus</span><span className="calc-val">{formatCurrency(data.bonusAmount)}</span></div>)}
             {data.commissionAmount > 0 && (<div className="flex justify-between"><span>Commission</span><span className="calc-val">{formatCurrency(data.commissionAmount)}</span></div>)}
-            <div className="flex justify-between font-bold border-t border-gray-400 pt-1"><span>GROSS PAY</span><span className="calc-val">{formatCurrency(data.grossPay)}</span></div>
+            <div className="flex justify-between font-bold border-t border-gray-400 pt-1 blur-totals"><span>GROSS PAY</span><span className="calc-val">{formatCurrency(data.grossPay)}</span></div>
           </div>
         </div>
         <div className="blur-taxes">
           <h3 className="font-bold mb-2 border-b border-gray-400" style={{ color: accent }}>DEDUCTIONS</h3>
           <div className="space-y-1">
             <div className="flex justify-between"><span>Federal Tax</span><span className="calc-val">{formatCurrency(data.federalTax || 0)}</span></div>
-            <div className="flex justify-between"><span>State Tax</span><span className="calc-val">{formatCurrency(data.stateTax || 0)}</span></div>
+            {(data.stateTax && data.stateTax > 0) && (
+              <div className="flex justify-between"><span>State Tax</span><span className="calc-val">{formatCurrency(data.stateTax || 0)}</span></div>
+            )}
             <div className="flex justify-between"><span>Social Security</span><span className="calc-val">{formatCurrency(data.socialSecurity || 0)}</span></div>
             <div className="flex justify-between"><span>Medicare</span><span className="calc-val">{formatCurrency(data.medicare || 0)}</span></div>
-            <div className="flex justify-between"><span>{((data.taxState || '').toUpperCase() === 'HI') ? 'TDI' : 'State Disability'}</span><span className="calc-val">{formatCurrency(data.stateDisability || 0)}</span></div>
+            {(data.stateDisability && data.stateDisability > 0) && (
+              <div className="flex justify-between"><span>{((data.taxState || '').toUpperCase() === 'HI') ? 'TDI' : 'State Disability'}</span><span className="calc-val">{formatCurrency(data.stateDisability || 0)}</span></div>
+            )}
             <div className="flex justify-between font-bold border-t border-gray-400 pt-1"><span>TOTAL DEDUCTIONS</span><span className="calc-val">{formatCurrency(data.totalDeductions)}</span></div>
           </div>
         </div>
       </div>
 
       <div className="border-t-2 border-gray-800 pt-4">
-        <div className="flex justify-between items-center p-3 rounded" style={{ backgroundColor: accent, color: "#ffffff" }}>
+        <div className="flex justify-between items-center p-3 rounded blur-totals" style={{ backgroundColor: accent, color: "#ffffff" }}>
           <span className="text-lg font-bold">NET PAY</span>
           <span className="text-xl font-bold calc-val">{formatCurrency(data.netPay)}</span>
         </div>

@@ -165,7 +165,7 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
                 <span className="calc-val">{formatCurrency(data.commissionAmount)}</span>
               </div>
             )}
-            <div className="flex justify-between font-bold border-t border-gray-400 pt-1">
+            <div className="flex justify-between font-bold border-t border-gray-400 pt-1 blur-totals">
               <span>GROSS PAY</span>
               <span className="calc-val">{formatCurrency(data.grossPay)}</span>
             </div>
@@ -223,10 +223,12 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
                 <span className="calc-val">{formatCurrency(data.hsa)}</span>
               </div>
             )}
-            <div className="flex justify-between">
-              <span>{((data.taxState || '').toUpperCase() === 'HI') ? 'TDI' : 'State Disability'}</span>
-              <span className="calc-val">{formatCurrency(data.stateDisability || 0)}</span>
-            </div>
+            {data.stateDisability > 0 && (
+              <div className="flex justify-between">
+                <span>{((data.taxState || '').toUpperCase() === 'HI') ? 'TDI' : 'State Disability'}</span>
+                <span className="calc-val">{formatCurrency(data.stateDisability || 0)}</span>
+              </div>
+            )}
             {data.visionInsurance > 0 && (
               <div className="flex justify-between">
                 <span>Vision Insurance</span>
@@ -267,7 +269,7 @@ export function PaystubPreview({ data }: PaystubPreviewProps) {
 
       {/* Net Pay */}
       <div className="border-t-2 border-gray-800 pt-4">
-        <div className="flex justify-between items-center p-3 rounded" style={{ backgroundColor: accent, color: '#ffffff' }}>
+        <div className="flex justify-between items-center p-3 rounded blur-totals" style={{ backgroundColor: accent, color: '#ffffff' }}>
           <span className="text-lg font-bold">NET PAY</span>
           <span className="text-xl font-bold calc-val">{formatCurrency(data.netPay)}</span>
         </div>

@@ -134,6 +134,11 @@
   filter: blur(6px) !important;
 }
 
+/* Also blur total earnings, gross totals, and net pay when explicitly wrapped */
+.preview-blur .blur-totals .calc-val {
+  filter: blur(6px) !important;
+}
+
 /* Global preview-only watermark overlay: center within each template container
    (bounded by #paystub-capture-target). Skip compact (template 4) which has
    its own built-in watermark. */

@@ -150,16 +150,20 @@ export function CompactPreview({ data }: TemplateProps) {
                 <div className="amt" style={{ textAlign: 'right' }}><span className="calc-val">{formatCurrency(data.federalTax || 0)}</span></div>
                 <div className="ytd" style={{ textAlign: 'right', color: muted, fontSize: 13 }}><span className="calc-val">{formatCurrency(ytdFederal || 0)}</span></div>
               </div>
-              <div className="ded-item" style={{ display: 'grid', gridTemplateColumns: '1fr 80px 90px', gap: 8, padding: '8px 6px', alignItems: 'center', borderTop: '1px solid #e6ecff' }}>
-                <div>State Tax</div>
-                <div className="amt" style={{ textAlign: 'right' }}><span className="calc-val">{formatCurrency(data.stateTax || 0)}</span></div>
-                <div className="ytd" style={{ textAlign: 'right', color: muted, fontSize: 13 }}><span className="calc-val">{formatCurrency(ytdState || 0)}</span></div>
-              </div>
-              <div className="ded-item" style={{ display: 'grid', gridTemplateColumns: '1fr 80px 90px', gap: 8, padding: '8px 6px', alignItems: 'center', borderTop: '1px solid #e6ecff' }}>
-                <div>{stateDisabilityLabel}</div>
-                <div className="amt" style={{ textAlign: 'right' }}><span className="calc-val">{formatCurrency(data.stateDisability || 0)}</span></div>
-                <div className="ytd" style={{ textAlign: 'right', color: muted, fontSize: 13 }}><span className="calc-val">{formatCurrency(ytdSDI || 0)}</span></div>
-              </div>
+              {(data.stateTax && data.stateTax > 0) && (
+                <div className="ded-item" style={{ display: 'grid', gridTemplateColumns: '1fr 80px 90px', gap: 8, padding: '8px 6px', alignItems: 'center', borderTop: '1px solid #e6ecff' }}>
+                  <div>State Tax</div>
+                  <div className="amt" style={{ textAlign: 'right' }}><span className="calc-val">{formatCurrency(data.stateTax || 0)}</span></div>
+                  <div className="ytd" style={{ textAlign: 'right', color: muted, fontSize: 13 }}><span className="calc-val">{formatCurrency(ytdState || 0)}</span></div>
+                </div>
+              )}
+              {(data.stateDisability && data.stateDisability > 0) && (
+                <div className="ded-item" style={{ display: 'grid', gridTemplateColumns: '1fr 80px 90px', gap: 8, padding: '8px 6px', alignItems: 'center', borderTop: '1px solid #e6ecff' }}>
+                  <div>{stateDisabilityLabel}</div>
+                  <div className="amt" style={{ textAlign: 'right' }}><span className="calc-val">{formatCurrency(data.stateDisability || 0)}</span></div>
+                  <div className="ytd" style={{ textAlign: 'right', color: muted, fontSize: 13 }}><span className="calc-val">{formatCurrency(ytdSDI || 0)}</span></div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -173,13 +177,13 @@ export function CompactPreview({ data }: TemplateProps) {
           <div className="tot-cell" style={{ borderRight: '1px solid rgba(255,255,255,0.18)', padding: 8, textAlign: 'center' }}>DEDUCTIONS</div>
           <div className="tot-cell" style={{ padding: 8, textAlign: 'center' }}>NET PAY</div>
         </div>
-        <div className="totals-vals" style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', background: '#fff', color: textColor, padding: '10px 10px', borderTop: `1px solid ${border}` }}>
-          <div className="val" style={{ padding: 8, textAlign: 'center', borderRight: '1px solid #e6ecff' }}>{formatCurrency(ytdGross || 0)}</div>
-          <div className="val" style={{ padding: 8, textAlign: 'center', borderRight: '1px solid #e6ecff' }}>{formatCurrency(taxesYtd || 0)}</div>
-          <div className="val" style={{ padding: 8, textAlign: 'center', borderRight: '1px solid #e6ecff' }}>{formatCurrency(ytdNet || 0)}</div>
-          <div className="val" style={{ padding: 8, textAlign: 'center', borderRight: '1px solid #e6ecff' }}>{formatCurrency(data.grossPay || 0)}</div>
-          <div className="val" style={{ padding: 8, textAlign: 'center', borderRight: '1px solid #e6ecff' }}>{formatCurrency(taxesCurrent || 0)}</div>
-          <div className="val" style={{ padding: 8, textAlign: 'center' }}>{formatCurrency(data.netPay || 0)}</div>
+        <div className="totals-vals blur-totals" style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', background: '#fff', color: textColor, padding: '10px 10px', borderTop: `1px solid ${border}` }}>
+          <div className="val" style={{ padding: 8, textAlign: 'center', borderRight: '1px solid #e6ecff' }}><span className="calc-val">{formatCurrency(ytdGross || 0)}</span></div>
+          <div className="val" style={{ padding: 8, textAlign: 'center', borderRight: '1px solid #e6ecff' }}><span className="calc-val">{formatCurrency(taxesYtd || 0)}</span></div>
+          <div className="val" style={{ padding: 8, textAlign: 'center', borderRight: '1px solid #e6ecff' }}><span className="calc-val">{formatCurrency(ytdNet || 0)}</span></div>
+          <div className="val" style={{ padding: 8, textAlign: 'center', borderRight: '1px solid #e6ecff' }}><span className="calc-val">{formatCurrency(data.grossPay || 0)}</span></div>
+          <div className="val" style={{ padding: 8, textAlign: 'center', borderRight: '1px solid #e6ecff' }}><span className="calc-val">{formatCurrency(taxesCurrent || 0)}</span></div>
+          <div className="val" style={{ padding: 8, textAlign: 'center' }}><span className="calc-val">{formatCurrency(data.netPay || 0)}</span></div>
         </div>
       </div>
     </div>
